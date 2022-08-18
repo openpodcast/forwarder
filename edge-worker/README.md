@@ -6,11 +6,11 @@ Instead, we just extract the URLS with a regex and replace them.
 
 ## Usage
 
-The `src/lib.rs` file, acts as an entrypoint for requests hitting the Worker.
+Run `make help` for a full list of commands.
 
 ```bash
 # compile project to WebAssembly
-wrangler build
+make build
 
 # run Worker in a development environment
 wrangler dev
