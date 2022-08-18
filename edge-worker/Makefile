@@ -17,6 +17,10 @@ dev: ## Run Worker in a development environment
 publish deploy: ## Deploy worker to Cloudflare
 	wrangler publish --verbose || echo "Try wrangler login?"
 
+.PHONY: logs tail
+logs tail: ## Stream worker logs
+	wrangler tail --verbose --format=pretty
+
 .PHONY: test
 test: ## Test request to worker
 	curl -A "Spotify/1.0" -c - https://forwarder.mre.workers.dev
