@@ -79,6 +79,8 @@ pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Respo
                     let response = Response::redirect(url)?;
 
                     // Clone the response so that it's no longer immutable
+                    // https://community.cloudflare.com/t/how-to-modify-immutable-headers-and-add-nonces-to-response-header/146165
+                    // https://developers.cloudflare.com/workers/examples/alter-headers
                     let mut new_response = Response::from_body(response.body().clone())?;
 
                     console_log!("Set cookie");
