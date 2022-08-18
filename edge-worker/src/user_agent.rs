@@ -19,6 +19,10 @@ static USER_AGENTS: Lazy<HashMap<String, String>> = Lazy::new(|| {
         "Amazon Music Podcast".to_string(),
         "Amazon Music Podcasts".to_string(),
     );
+    user_agents.insert(
+        "AmazonMusic/".to_string(),
+        "Amazon Music Podcasts".to_string(),
+    );
     user_agents.insert("AntennaPod/".to_string(), "AntennaPod".to_string());
     user_agents.insert(
         "anytime_podcast_player".to_string(),
@@ -383,6 +387,10 @@ mod tests {
         assert_eq!(
             lookup("Spotify/8.6.82 iOS/15.1 (iPhone12,1)"),
             Some("Spotify".to_string())
+        );
+        assert_eq!(
+            lookup("AmazonMusic/9.16.0 iPhone12,1 CFNetwork/1128.0.1 Darwin/19.6.0"),
+            Some("Amazon Music Podcasts".to_string())
         );
     }
 }
