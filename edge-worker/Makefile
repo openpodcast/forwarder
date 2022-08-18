@@ -13,9 +13,9 @@ build: # Compile project to WebAssembly
 dev: ## Run Worker in a development environment
 	wrangler dev 
 
-.PHONY: publish 
-publish: ## Deploy worker to Cloudflare
-	wrangler publish 
+.PHONY: publish deploy
+publish deploy: ## Deploy worker to Cloudflare
+	wrangler publish --verbose || echo "Try wrangler login?"
 
 .PHONY: test
 test: ## Test request to worker
