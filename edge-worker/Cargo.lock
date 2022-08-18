@@ -107,6 +107,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "forwarder"
+version = "0.1.0"
+dependencies = [
+ "cfg-if",
+ "console_error_panic_hook",
+ "once_cell",
+ "regex",
+ "url",
+ "urlencoding",
+ "worker",
+]
+
+[[package]]
 name = "futures-channel"
 version = "0.3.23"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -660,19 +673,6 @@ dependencies = [
  "worker-kv",
  "worker-macros",
  "worker-sys",
-]
-
-[[package]]
-name = "worker"
-version = "0.1.0"
-dependencies = [
- "cfg-if",
- "console_error_panic_hook",
- "once_cell",
- "regex",
- "url",
- "urlencoding",
- "worker 0.0.10",
 ]
 
 [[package]]
