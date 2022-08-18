@@ -42,12 +42,11 @@ pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Respo
                 Ok(ua) => ua,
                 Err(e) => {
                     // Silently ignore user agent errors to avoid breaking requests
-                    println!("Error detecting user agent: {e}");
+                    console_log!("Error detecting user agent: {e}");
                     "unknown".to_string()
                 }
             };
-            // TODO: Add proper logging for user agents
-            println!("Received request form {user_agent}");
+            console_log!("Received request from {user_agent}");
 
             // // Fetch original RSS feed
             let mut orig_response = Fetch::Request(Request::new(UPSTREAM_FEED_URL, Method::Get)?)
@@ -57,9 +56,18 @@ pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Respo
 
             // Rewrite original feed with edge worker URLs, but keep original mp3 URLs
             // and attach them as encoded string for future forwarding
-            let output = Replacer::new("worker.mre.workers.dev", Some("/r")).replace(feed_content);
-            // let response = Response::ok(output)?.with_headers(orig_response.headers().to_owned());
-            let response = Response::ok(output)?;
+            let output =
+                Replacer::new("forwarder.mre.workers.dev", Some("/r")).replace(feed_content);
+
+            // Pass original request headers to client
+            let mut response =
+                Response::ok(output)?.with_headers(orig_response.headers().to_owned());
+
+            console_log!("Set cookie");
+            response
+                .headers_mut()
+                .append("Set-Cookie", "forwarder=bar; SameSite=None")?;
+
             Ok(response)
         })
         .get("/r/*forward_url", |request, _context| {
@@ -68,13 +76,15 @@ pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Respo
             match forward::get(request, Some("/r")) {
                 Ok(url) => {
                     println!("Forwarding to {url}");
-                    let mut response = Response::redirect(url)?;
-                    if cookie.is_none() {
-                        console_log!("Set cookie");
-                        response
-                            .headers_mut()
-                            .append("Set-Cookie", "foo=bar; SameSite=None")?;
-                    }
+                    let response = Response::redirect(url)?;
+
+                    // Clone the response so that it's no longer immutable
+                    let mut new_response = Response::from_body(response.body().clone())?;
+
+                    console_log!("Set cookie");
+                    new_response
+                        .headers_mut()
+                        .append("Set-Cookie", "forwarder=bar; SameSite=None")?;
                     Ok(response)
                 }
                 Err(e) => Response::error(e.to_string(), 404),
