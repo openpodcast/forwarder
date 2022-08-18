@@ -12,11 +12,11 @@ use crate::rss::Replacer;
 
 fn log_request(req: &Request) {
     console_log!(
-        "{} - [{}], located at: {:?}, within: {}",
+        "{} - [{}], located at: {:?}, cf: {:#?}",
         Date::now().to_string(),
         req.path(),
         req.cf().coordinates().unwrap_or_default(),
-        req.cf().region().unwrap_or_else(|| "unknown region".into())
+        req.cf()
     );
 }
 
@@ -64,14 +64,16 @@ pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Respo
         })
         .get("/r/*forward_url", |request, _context| {
             let cookie = request.headers().get("Cookie")?;
+            console_log!("{cookie:?}");
             match forward::get(request, Some("/r")) {
                 Ok(url) => {
                     println!("Forwarding to {url}");
                     let mut response = Response::redirect(url)?;
                     if cookie.is_none() {
+                        console_log!("Set cookie");
                         response
                             .headers_mut()
-                            .set("Set-Cookie", "id=a3fWa; SameSite=None")?;
+                            .append("Set-Cookie", "foo=bar; SameSite=None")?;
                     }
                     Ok(response)
                 }
