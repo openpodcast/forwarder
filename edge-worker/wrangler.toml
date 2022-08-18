@@ -1,16 +1,16 @@
 name = "forwarder"
 type = "javascript"
 workers_dev = true
-compatibility_date = "2022-02-05"
+compatibility_date = "2022-08-18"
 
 [vars]
-WORKERS_RS_VERSION = "0.0.8"
+WORKERS_RS_VERSION = "0.0.10"
 
 [build]
 command = "cargo install -q worker-build && worker-build --release" # required
 
 [build.upload]
-dir = "build/forwarder"
+dir = "build/worker"
 format = "modules"
 main = "./shim.mjs"
 
