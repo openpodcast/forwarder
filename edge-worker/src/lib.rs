@@ -67,7 +67,7 @@ pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Respo
             match forward::get(request, Some("/r")) {
                 Ok(url) => {
                     println!("Forwarding to {url}");
-                    let mut response = Response::redirect(url)?;
+                    let response = Response::redirect(url)?;
                     // if cookie.is_none() {
                     // let headers = response.headers_mut();
                     // doesn't work yet...
