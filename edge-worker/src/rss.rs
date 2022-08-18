@@ -1,9 +1,19 @@
 use regex::Regex;
 use std::collections::HashMap;
 use url::Url;
-use urlencoding::encode;
 
 const LINK_REGEX: &str = r#"<enclosure.*url=("|')(?P<url>.*?)("|')"#;
+
+/// Set an optional path prefix if specified
+/// Example:
+/// let path_prefix = Some("/r/");
+/// example.com/podcast.mp3 -> example.com/r/podcast.mp3
+fn set_prefix<'a>(url: &'a mut Url, prefix: &str) -> &'a mut Url {
+    let old_path = url.path();
+    let path_with_prefix = prefix.to_string() + old_path;
+    url.set_path(&path_with_prefix);
+    url
+}
 
 /// Replaces the host of mp3 links inside RSS enclosure elements
 pub struct Replacer {
@@ -33,8 +43,7 @@ impl Replacer {
     fn extract(&self, input: &str) -> Vec<String> {
         self.re
             .captures_iter(input)
-            .map(|c| c.name("url").map(|m| m.as_str().to_owned()))
-            .flatten()
+            .filter_map(|c| c.name("url").map(|m| m.as_str().to_owned()))
             .collect()
     }
 
@@ -52,32 +61,30 @@ impl Replacer {
 
     /// Replaces the host of all mp3 links which were found
     /// Uses an ad-hoc lookup table for replacing old with new links
-    /// This is pretty inefficient as we iterate over the input N times where N is the number of links
+    ///
+    /// This is pretty inefficient as we iterate over the input N times where N
+    /// is the number of links
     #[must_use]
     pub fn replace(&self, mut input: String) -> String {
         let mp3s = self.extract_mp3s(&input);
         let lookup_table: HashMap<String, String> = mp3s
             .into_iter()
-            // safety: host has been confirmed to be valid in constructor and is not `None`
-            // so unwrap is safe here
             .map(|orig| {
                 let mut replaced = orig.clone();
+
+                // safety: host has been confirmed to be valid in constructor and is not `None`
+                // so unwrap is safe here
                 replaced.set_host(Some(self.host.as_str())).unwrap();
 
-                // Set an optional path prefix if specified
-                // Example:
-                // let path_prefix = Some("/r/");
+                // Set optional prefix if specified
                 // example.com/podcast.mp3 -> example.com/r/podcast.mp3
                 if let Some(prefix) = &self.path_prefix {
-                    let old_path = replaced.path();
-                    let path_with_prefix = prefix.to_string() + old_path;
-                    replaced.set_path(&path_with_prefix);
+                    set_prefix(&mut replaced, prefix);
                 }
 
-                replaced
-                    .query_pairs_mut()
-                    .append_pair("ref", &encode(orig.as_str()));
-                (orig.as_str().to_owned(), replaced.as_str().to_owned())
+                replaced.query_pairs_mut().append_pair("ref", orig.as_str());
+
+                (orig.as_str().to_string(), replaced.as_str().to_string())
             })
             .collect();
 
@@ -101,6 +108,16 @@ impl Replacer {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    use pretty_assertions::assert_eq;
+
+    #[test]
+    fn test_set_prefix() {
+        let mut url = Url::parse("http://example.com/podcast.mp3").unwrap();
+        let expected = Url::parse("http://example.com/r/podcast.mp3").unwrap();
+        let actual = set_prefix(&mut url, "/r");
+        assert_eq!(actual, &expected);
+    }
 
     #[test]
     fn test_extract_link_from_enclosure() {
@@ -210,7 +227,7 @@ mod tests {
     #[test]
     fn test_replace_mp3() {
         let old_mp3 = r#"<enclosure url="https://example.com/podcast.mp3" type="audio/mpeg" length="96950025"/>"#;
-        let new_mp3 = r#"<enclosure url="https://foo.org/podcast.mp3?ref=https%253A%252F%252Fexample.com%252Fpodcast.mp3" type="audio/mpeg" length="96950025"/>"#;
+        let new_mp3 = r#"<enclosure url="https://foo.org/podcast.mp3?ref=https%3A%2F%2Fexample.com%2Fpodcast.mp3" type="audio/mpeg" length="96950025"/>"#;
         let output = Replacer::new("foo.org", None).replace(old_mp3.to_string());
         assert_eq!(output, new_mp3);
     }
@@ -227,9 +244,9 @@ mod tests {
             <enclosure />
         "#;
         let expected = r#"
-            <enclosure url="https://example.org/podcast1.mp3?ref=https%253A%252F%252Fexample.com%252Fpodcast1.mp3" type="audio/mpeg" length="96950025"/>
-            <enclosure url="http://example.org/podcast2.mp3?ref=http%253A%252F%252Fexample.com%252Fpodcast2.mp3" type="audio/mpeg" length="96950025"/>
-            <enclosure url="https://example.org/some/podcast3.mp3?bla=blub123&ref=https%253A%252F%252Ffoo.com%252Fsome%252Fpodcast3.mp3%253Fbla%253Dblub123" type="audio/mpeg" length="96950025"></enclosure>
+            <enclosure url="https://example.org/podcast1.mp3?ref=https%3A%2F%2Fexample.com%2Fpodcast1.mp3" type="audio/mpeg" length="96950025"/>
+            <enclosure url="http://example.org/podcast2.mp3?ref=http%3A%2F%2Fexample.com%2Fpodcast2.mp3" type="audio/mpeg" length="96950025"/>
+            <enclosure url="https://example.org/some/podcast3.mp3?bla=blub123&ref=https%3A%2F%2Ffoo.com%2Fsome%2Fpodcast3.mp3%3Fbla%3Dblub123" type="audio/mpeg" length="96950025"></enclosure>
             <enclosure url="ftp://example.com/fake_podcast.mp3" type="audio/mpeg" length="96950025"/>
             <enclosure url="example.com/podcast4.mp3" type="audio/mpeg" length="96950025"/>
             <enclosure url="lol" type="audio/mpeg" length="96950025"/>
@@ -249,10 +266,10 @@ mod tests {
             <enclosure />
         "#;
         let expected = r#"
-            <enclosure url="https://example.org/r/podcast1.mp3?ref=https%253A%252F%252Fexample.com%252Fpodcast1.mp3" type="audio/mpeg" length="96950025"/>
-            <enclosure url="http://example.org/r/podcast2.mp3?ref=http%253A%252F%252Fexample.com%252Fpodcast2.mp3" type="audio/mpeg" length="96950025"/>
-            <enclosure url="https://example.org/r/podcast3.mp3?ref=https%253A%252F%252Fexample.org%252Fpodcast3.mp3" type="audio/mpeg" length="96950025"/>
-            <enclosure url="https://example.org/r/some/podcast3.mp3?bla=blub123&ref=https%253A%252F%252Ffoo.com%252Fsome%252Fpodcast3.mp3%253Fbla%253Dblub123" type="audio/mpeg" length="96950025"></enclosure>
+            <enclosure url="https://example.org/r/podcast1.mp3?ref=https%3A%2F%2Fexample.com%2Fpodcast1.mp3" type="audio/mpeg" length="96950025"/>
+            <enclosure url="http://example.org/r/podcast2.mp3?ref=http%3A%2F%2Fexample.com%2Fpodcast2.mp3" type="audio/mpeg" length="96950025"/>
+            <enclosure url="https://example.org/r/podcast3.mp3?ref=https%3A%2F%2Fexample.org%2Fpodcast3.mp3" type="audio/mpeg" length="96950025"/>
+            <enclosure url="https://example.org/r/some/podcast3.mp3?bla=blub123&ref=https%3A%2F%2Ffoo.com%2Fsome%2Fpodcast3.mp3%3Fbla%3Dblub123" type="audio/mpeg" length="96950025"></enclosure>
             <enclosure />
         "#;
         let output = Replacer::new("example.org", Some("/r")).replace(input.to_string());

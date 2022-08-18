@@ -27,3 +27,6 @@ urlencoding = "2.1.0"
 [profile.release]
 # Tell `rustc` to optimize for small code size.
 opt-level = "s"
+
+[dev-dependencies]
+pretty_assertions = "1.2.1"
