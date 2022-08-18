@@ -11,6 +11,7 @@ pub struct Replacer {
     host: String,
     /// Optional path prefix for replaced URLs
     path_prefix: Option<String>,
+    /// Regex for finding mp3 links
     re: Regex,
 }
 
@@ -24,16 +25,6 @@ impl Replacer {
         Self {
             host,
             path_prefix: path_prefix.map(|s| s.into()),
-            re,
-        }
-    }
-
-    #[cfg(test)]
-    fn dummy() -> Self {
-        let re = Regex::new(LINK_REGEX).unwrap();
-        Self {
-            host: "test_dummy.com".to_string(),
-            path_prefix: None,
             re,
         }
     }
@@ -94,6 +85,16 @@ impl Replacer {
             input = input.replace(&mp3, &replaced);
         }
         input
+    }
+
+    #[cfg(test)]
+    fn dummy() -> Self {
+        let re = Regex::new(LINK_REGEX).unwrap();
+        Self {
+            host: "test_dummy.com".to_string(),
+            path_prefix: None,
+            re,
+        }
     }
 }
 

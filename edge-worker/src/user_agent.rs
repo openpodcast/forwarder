@@ -4,6 +4,7 @@ use worker::*;
 
 /// Lookup table of user agents
 /// Source: https://github.com/opawg/podcast-rss-useragents/blob/master/src/rss-ua.json
+/// Each config consists of a pattern and a cleaned up user agent string.
 static USER_AGENTS: Lazy<HashMap<String, String>> = Lazy::new(|| {
     let mut user_agents = HashMap::new();
     user_agents.insert("Acast".to_string(), "Acast".to_string());
@@ -367,4 +368,21 @@ fn lookup(user_agent: &str) -> Option<String> {
         }
     }
     None
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_lookup() {
+        assert_eq!(
+            lookup("Spotify/8.6.88.1104 Android/30 (SM-A525F)"),
+            Some("Spotify".to_string())
+        );
+        assert_eq!(
+            lookup("Spotify/8.6.82 iOS/15.1 (iPhone12,1)"),
+            Some("Spotify".to_string())
+        );
+    }
 }
