@@ -20,7 +20,7 @@ wrangler login
 wrangler publish
 
 # test request
-curl -A "Spotify/1.0" https://worker.mre.workers.dev
+curl -A "Spotify/1.0" -c cookie-jar.txt https://forwarder.mre.workers.dev
 ```
 
 ## Implementation steps
