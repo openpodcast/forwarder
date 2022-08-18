@@ -3,6 +3,9 @@ name = "forwarder"
 version = "0.1.0"
 authors = ["Matthias <matthias-endler@gmx.net>"]
 edition = "2021"
+description = "Forwarder for MP3 files in podcast feeds"
+license = "Apache-2.0/MIT"
+repository = "https://github.com/openpodcast/forwarder"
 
 [lib]
 crate-type = ["cdylib", "rlib"]
