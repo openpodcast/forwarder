@@ -63,16 +63,15 @@ pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Respo
             Ok(response)
         })
         .get("/r/*forward_url", |request, _context| {
-            // let cookie = request.headers().get("Cookie")?;
+            let cookie = request.headers().get("Cookie")?;
             match forward::get(request, Some("/r")) {
                 Ok(url) => {
                     println!("Forwarding to {url}");
-                    let response = Response::redirect(url)?;
-                    // if cookie.is_none() {
-                    // let headers = response.headers_mut();
-                    // doesn't work yet...
-                    // headers.set("Set-Cookie", "id=a3fWa; SameSite=None")?;
-                    // }
+                    let mut response = Response::redirect(url)?;
+                    if cookie.is_none() {
+                        let headers = response.headers_mut();
+                        headers.set("Set-Cookie", "id=a3fWa; SameSite=None")?;
+                    }
                     Ok(response)
                 }
                 Err(e) => Response::error(e.to_string(), 404),
