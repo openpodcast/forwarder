@@ -69,8 +69,9 @@ pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Respo
                     println!("Forwarding to {url}");
                     let mut response = Response::redirect(url)?;
                     if cookie.is_none() {
-                        let headers = response.headers_mut();
-                        headers.set("Set-Cookie", "id=a3fWa; SameSite=None")?;
+                        response
+                            .headers_mut()
+                            .set("Set-Cookie", "id=a3fWa; SameSite=None")?;
                     }
                     Ok(response)
                 }

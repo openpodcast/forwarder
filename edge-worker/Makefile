@@ -19,4 +19,4 @@ publish: ## Deploy worker to Cloudflare
 
 .PHONY: test
 test: ## Test request to worker
-	curl -A "Spotify/1.0" https://forwarder.mre.workers.dev
+	curl -A "Spotify/1.0" -c - https://forwarder.mre.workers.dev
