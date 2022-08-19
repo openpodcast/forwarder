@@ -21,7 +21,9 @@ fn valid_forwarding_url(request: &Request, prefix: &str) -> Result<()> {
 
 /// Extract redirect URL from ref parameter
 fn extract_ref(request: &Request) -> Result<Url> {
-    if let Some((_, forward)) = request.url()?.query_pairs().find(|(k, _)| k == "ref") {
+    let html_decoded = html_escape::decode_html_entities(&request.url()?).to_string();
+    let url = Url::parse(&html_decoded)?;
+    if let Some((_, forward)) = url.query_pairs().find(|(k, _)| k == "ref") {
         let decoded = decode(&forward)
             .map_err(|e| Error::RustError(format!("Cannot decode ref {forward}: {e}")))?;
         return Ok(Url::parse(&decoded)?);

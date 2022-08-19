@@ -84,7 +84,13 @@ impl Replacer {
 
                 replaced.query_pairs_mut().append_pair("ref", orig.as_str());
 
-                (orig.as_str().to_string(), replaced.as_str().to_string())
+                (
+                    orig.as_str().to_string(),
+                    // Escape `&` character as html entities to make feed readable in browser
+                    // See https://stackoverflow.com/a/17918240/270334
+                    // See https://docs.rs/html-escape/latest/html_escape/
+                    html_escape::encode_text(replaced.as_str()).to_string(),
+                )
             })
             .collect();
 
@@ -246,7 +252,7 @@ mod tests {
         let expected = r#"
             <enclosure url="https://example.org/podcast1.mp3?ref=https%3A%2F%2Fexample.com%2Fpodcast1.mp3" type="audio/mpeg" length="96950025"/>
             <enclosure url="http://example.org/podcast2.mp3?ref=http%3A%2F%2Fexample.com%2Fpodcast2.mp3" type="audio/mpeg" length="96950025"/>
-            <enclosure url="https://example.org/some/podcast3.mp3?bla=blub123&ref=https%3A%2F%2Ffoo.com%2Fsome%2Fpodcast3.mp3%3Fbla%3Dblub123" type="audio/mpeg" length="96950025"></enclosure>
+            <enclosure url="https://example.org/some/podcast3.mp3?bla=blub123&amp;ref=https%3A%2F%2Ffoo.com%2Fsome%2Fpodcast3.mp3%3Fbla%3Dblub123" type="audio/mpeg" length="96950025"></enclosure>
             <enclosure url="ftp://example.com/fake_podcast.mp3" type="audio/mpeg" length="96950025"/>
             <enclosure url="example.com/podcast4.mp3" type="audio/mpeg" length="96950025"/>
             <enclosure url="lol" type="audio/mpeg" length="96950025"/>
@@ -269,7 +275,7 @@ mod tests {
             <enclosure url="https://example.org/r/podcast1.mp3?ref=https%3A%2F%2Fexample.com%2Fpodcast1.mp3" type="audio/mpeg" length="96950025"/>
             <enclosure url="http://example.org/r/podcast2.mp3?ref=http%3A%2F%2Fexample.com%2Fpodcast2.mp3" type="audio/mpeg" length="96950025"/>
             <enclosure url="https://example.org/r/podcast3.mp3?ref=https%3A%2F%2Fexample.org%2Fpodcast3.mp3" type="audio/mpeg" length="96950025"/>
-            <enclosure url="https://example.org/r/some/podcast3.mp3?bla=blub123&ref=https%3A%2F%2Ffoo.com%2Fsome%2Fpodcast3.mp3%3Fbla%3Dblub123" type="audio/mpeg" length="96950025"></enclosure>
+            <enclosure url="https://example.org/r/some/podcast3.mp3?bla=blub123&amp;ref=https%3A%2F%2Ffoo.com%2Fsome%2Fpodcast3.mp3%3Fbla%3Dblub123" type="audio/mpeg" length="96950025"></enclosure>
             <enclosure />
         "#;
         let output = Replacer::new("example.org", Some("/r")).replace(input.to_string());
