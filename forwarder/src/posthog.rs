@@ -83,6 +83,7 @@ pub struct Event {
 #[derive(Serialize, Debug, PartialEq, Eq)]
 pub struct Properties {
     distinct_id: String,
+    #[serde(flatten)]
     props: HashMap<String, serde_json::Value>,
 }
 
@@ -111,34 +112,45 @@ impl Event {
     }
 }
 
-// Async tests don't work yet
-// #[cfg(test)]
-// pub mod tests {
-//     use super::*;
-//
-//     #[test]
-//     async fn get_client() {
-//         body: Some(JsValue::from_str(&format!(
-//             "{}",
-//             json!({
-//                 "api_key": self.config.api_key,
-//                 "event": "rss_feed_request",
-//                 "properties": {
-//                     "distinct_id": "user1",
-//                     "user_agent": "sdf",
-//                     "url": self.config.api_endpoint,
-//                 },
-//             })
-//         ))),
-//         let client = Client::new("api_key");
-//
-//         let mut event = Event::new("rss_feed_request", "user1");
-//         event.property("user_agent", "sdf").unwrap();
-//
-//         let mut child_map = HashMap::new();
-//         child_map.insert("child_key1", "child_value1");
-//         event.property("key3", child_map).unwrap();
-//
-//         client.send(event).await.unwrap();
-//     }
-// }
+#[cfg(test)]
+pub mod tests {
+    use serde_json::json;
+
+    use super::*;
+
+    #[test]
+    fn test_create_event() -> Result<()> {
+        let expected = json!({
+            "api_key": "api_key",
+            "event": "rss_feed_request",
+            "properties": {
+                "distinct_id": "user1",
+                "user_agent": "sdf",
+                "url": "https://www.example.com",
+            },
+        });
+
+        let event = Event::new("rss_feed_request", "user1")
+            .property("user_agent", "sdf")?
+            .property("url", "https://www.example.com")?;
+
+        let inner_event = InnerEvent::new(event, "api_key".to_string());
+
+        assert_eq!(expected, serde_json::to_value(inner_event).unwrap());
+
+        // Async tests don't work yet
+        // let client = Client::new("api_key");
+        // client.send(event).await.unwrap();
+        Ok(())
+    }
+
+    #[test]
+    fn test_child_map() {
+        let event = Event::new("rss_feed_request", "user1")
+            .property("user_agent", "sdf")
+            .unwrap();
+        let mut child_map = HashMap::new();
+        child_map.insert("child_key1", "child_value1");
+        event.property("key3", child_map).unwrap();
+    }
+}
