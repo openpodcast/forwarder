@@ -33,7 +33,7 @@ fn log_request(req: &Request) {
 ///
 /// * the request is not a valid RSS feed request
 /// * the request could not be forwarded
-/// * the feed URL could not be retr&ieved from the config
+/// * the feed URL could not be retrieved from the config
 #[event(fetch)]
 pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Response> {
     log_request(&req);
@@ -56,20 +56,10 @@ pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Respo
             // Get feed URL from worker environment.
             let upstream = ctx.var("UPSTREAM_FEED_URL")?.to_string();
 
-            let user_agent = user_agent::from(&request);
-            let user_agent = match user_agent {
-                Ok(ua) => ua,
-                Err(e) => {
-                    // Silently ignore user agent errors to avoid breaking
-                    // requests
-                    console_log!("Error detecting user agent: {e}");
-                    "unknown".to_string()
-                }
-            };
+            let user_agent = user_agent::from(&request).unwrap_or_else(|_| "unknown".to_string());
             console_log!("Received request from {user_agent}");
 
-            let client = posthog::Client::new(ctx.var("POSTHOG_API_KEY")?.to_string());
-            let response = client
+            let response = posthog::Client::new(ctx.var("POSTHOG_API_KEY")?.to_string())
                 .send(posthog::Event::new("rss", &upstream).property("user_agent", user_agent)?)
                 .await?;
             console_log!("PostHog status: {:#?}", response);
@@ -88,7 +78,6 @@ pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Respo
             // Pass original request headers to client
             let mut response = Response::ok(output)?.with_headers(orig_response.headers().clone());
 
-            console_log!("Set cookie");
             response
                 .headers_mut()
                 .append("Set-Cookie", "forwarder=bar; SameSite=None")?;
@@ -108,7 +97,6 @@ pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Respo
                     // https://developers.cloudflare.com/workers/examples/alter-headers
                     let mut new_response = Response::from_body(response.body().clone())?;
 
-                    console_log!("Set cookie");
                     new_response
                         .headers_mut()
                         .append("Set-Cookie", "forwarder=bar; SameSite=None")?;
