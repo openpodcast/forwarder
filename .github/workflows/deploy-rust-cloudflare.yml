@@ -1,4 +1,4 @@
-name: Deploy
+name: Deploy Rust Cloudflare
 
 on:
   push:
@@ -10,6 +10,9 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./forwarder
     name: Deploy
     steps:
       - uses: actions/checkout@v2
@@ -25,4 +28,3 @@ jobs:
         uses: cloudflare/wrangler-action@2.0.0
         with:
           apiToken: ${{ secrets.CF_API_TOKEN }}
-          workingDirectory: "forwarder"
