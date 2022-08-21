@@ -1,9 +1,10 @@
 name: Deploy Rust Cloudflare
 
 on:
-  push:
-    branches:
-      - master
+  # Currently too slow to be practical
+  # push:
+  #   branches:
+  #     - master
   repository_dispatch:
   workflow_dispatch:
 
