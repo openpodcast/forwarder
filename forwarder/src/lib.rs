@@ -80,7 +80,8 @@ pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Respo
                     let mut event = posthog::Event::new("mp3", &upstream(&ctx)?)
                         .property("user_agent", user_agent(&request))?
                         .property("path", request.path())?;
-                    if let Some(reference) = ctx.param("ref") {
+
+                    if let Some(reference) = url.query_pairs().find(|(k, _)| k == "ref") {
                         event = event.property("upstream", reference)?;
                     }
 
