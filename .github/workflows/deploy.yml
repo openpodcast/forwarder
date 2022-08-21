@@ -11,18 +11,12 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     name: Deploy
-    defaults:
-      run:
-        working-directory: forwarder
     steps:
       - uses: actions/checkout@v2
-      - name: Install Rust minimal stable
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
+      # Can't use `cloudflare/wrangler-action`.
+      # See <https://github.com/cloudflare/wrangler-action/pull/61>
       - name: Publish
-        uses: cloudflare/wrangler-action@2.0.0
-        with:
-          apiToken: ${{ secrets.CF_API_TOKEN }}
-          workingDirectory: forwarder
+        env:
+          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+        working-directory: forwarder
+        run: npm i @cloudflare/wrangler && npx wrangler publish
