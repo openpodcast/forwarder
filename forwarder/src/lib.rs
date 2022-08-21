@@ -11,7 +11,11 @@ mod forward;
 mod panic;
 mod rss;
 mod user_agent;
-use worker::{console_log, event, Date, Env, Fetch, Method, Request, Response, Result, Router};
+use serde_json::json;
+use worker::{
+    console_log, event, wasm_bindgen::JsValue, Date, Env, Fetch, Method, Request, RequestInit,
+    Response, Result, Router,
+};
 
 use crate::rss::Replacer;
 
@@ -32,7 +36,7 @@ fn log_request(req: &Request) {
 ///
 /// * the request is not a valid RSS feed request
 /// * the request could not be forwarded
-/// * the feed URL could not be retrieved from the config
+/// * the feed URL could not be retr&ieved from the config
 #[event(fetch)]
 pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Response> {
     log_request(&req);
@@ -66,6 +70,30 @@ pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Respo
                 }
             };
             console_log!("Received request from {user_agent}");
+
+            console_log!("Logging request to PostHog");
+
+            let r = Request::new_with_init(
+                "https://app.posthog.com/capture/",
+                &RequestInit {
+                    method: Method::Post,
+                    body: Some(JsValue::from_str(&format!(
+                        "{}",
+                        json!({
+                            "api_key": "phc_9ED9rP5zeJiXctQIAeern5RKHhFtmoWIIujzg90zisP",
+                            "event": "rss_feed_request",
+                            "properties": {
+                                "distinct_id": "user1",
+                                "user_agent": user_agent,
+                                "url": upstream,
+                            },
+                        })
+                    ))),
+                    ..RequestInit::default()
+                },
+            )?;
+            let response = Fetch::Request(r).send().await?;
+            console_log!("PostHog status: {:#?}", response);
 
             // Fetch original RSS feed.
             let mut orig_response = Fetch::Request(Request::new(&upstream, Method::Get)?)
