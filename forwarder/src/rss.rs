@@ -34,7 +34,7 @@ impl Replacer {
     #[must_use]
     /// Construct a replacer with the given host
     /// Host needs to be valid for replacements
-    pub fn new<T: Into<String>>(host: T, path_prefix: Option<T>) -> Self {
+    pub fn new<T: Into<String>>(host: T, path_prefix: Option<&str>) -> Self {
         let host = host.into();
         let re = Regex::new(LINK_REGEX).unwrap();
         Self {

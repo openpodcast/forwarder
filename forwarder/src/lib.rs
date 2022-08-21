@@ -26,6 +26,15 @@ fn log_request(req: &Request) {
     );
 }
 
+// Gets the worker host URL (e.g. <worker.namespace.workers.dev>)
+fn host(req: &Request) -> Result<String> {
+    let url = req.url()?;
+    let host = url
+        .host()
+        .ok_or_else(|| worker::Error::RustError("Cannot get worker host".to_string()))?;
+    Ok(host.to_string())
+}
+
 /// Handle RSS feed requests by forwarding them to the original URL and logging
 /// the request
 ///
@@ -72,8 +81,7 @@ pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Respo
 
             // Rewrite original feed with edge worker URLs, but keep original
             // mp3 URLs and attach them as encoded string for future forwarding
-            let output =
-                Replacer::new("forwarder.mre.workers.dev", Some("/r")).replace(feed_content);
+            let output = Replacer::new(host(&request)?, Some("/r")).replace(feed_content);
 
             // Pass original request headers to client
             let mut response = Response::ok(output)?.with_headers(orig_response.headers().clone());
