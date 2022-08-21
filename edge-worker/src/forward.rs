@@ -1,5 +1,5 @@
 use urlencoding::decode;
-use worker::*;
+use worker::{Error, Request, Result, Url};
 
 /// Check if the given request URL points to a valid mp3 file
 fn valid_forwarding_url(request: &Request, prefix: &str) -> Result<()> {
@@ -34,10 +34,10 @@ fn extract_ref(request: &Request) -> Result<Url> {
 /// Extract our custom forward URL form the request.
 /// It is encoded in the `ref` query parameter
 /// Example:
-/// https://example.org/r/podcast1.mp3?ref=https%253A%252F%252Fexample.com%252Fpodcast1.mp3
-pub fn get(request: Request, prefix: Option<&str>) -> Result<Url> {
+/// <https://example.org/r/podcast1.mp3?ref=https%253A%252F%252Fexample.com%252Fpodcast1.mp3>
+pub fn get(request: &Request, prefix: Option<&str>) -> Result<Url> {
     if let Some(prefix) = prefix {
-        valid_forwarding_url(&request, prefix)?;
+        valid_forwarding_url(request, prefix)?;
     }
-    extract_ref(&request)
+    extract_ref(request)
 }

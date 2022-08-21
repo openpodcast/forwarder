@@ -1,11 +1,17 @@
 //! Edge worker for handling and modifying RSS feeds on the fly
 //! based on user agents
 
+#![deny(clippy::all)]
+#![warn(clippy::pedantic)]
+#![warn(clippy::nursery)]
+#![warn(clippy::cargo)]
+#![allow(clippy::future_not_send)]
+
 mod forward;
 mod panic;
 mod rss;
 mod user_agent;
-use worker::*;
+use worker::{console_log, event, Date, Env, Fetch, Method, Request, Response, Result, Router};
 
 use crate::rss::Replacer;
 
@@ -19,6 +25,14 @@ fn log_request(req: &Request) {
     );
 }
 
+/// Handle RSS feed requests by forwarding them to the original URL and logging
+/// the request
+///
+/// # Errors
+///
+/// * the request is not a valid RSS feed request
+/// * the request could not be forwarded
+/// * the feed URL could not be retrieved from the config
 #[event(fetch)]
 pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Response> {
     log_request(&req);
@@ -41,7 +55,7 @@ pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Respo
             // Get feed URL from worker environment.
             let upstream = ctx.var("UPSTREAM_FEED_URL")?.to_string();
 
-            let user_agent = user_agent::from(request);
+            let user_agent = user_agent::from(&request);
             let user_agent = match user_agent {
                 Ok(ua) => ua,
                 Err(e) => {
@@ -65,8 +79,7 @@ pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Respo
                 Replacer::new("forwarder.mre.workers.dev", Some("/r")).replace(feed_content);
 
             // Pass original request headers to client
-            let mut response =
-                Response::ok(output)?.with_headers(orig_response.headers().to_owned());
+            let mut response = Response::ok(output)?.with_headers(orig_response.headers().clone());
 
             console_log!("Set cookie");
             response
@@ -78,7 +91,7 @@ pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Respo
         .get("/r/*forward_url", |request, _ctx| {
             let cookie = request.headers().get("Cookie")?;
             console_log!("{cookie:?}");
-            match forward::get(request, Some("/r")) {
+            match forward::get(&request, Some("/r")) {
                 Ok(url) => {
                     println!("Forwarding to {url}");
                     let response = Response::redirect(url)?;

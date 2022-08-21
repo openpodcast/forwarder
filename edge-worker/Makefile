@@ -15,7 +15,7 @@ dev: ## Run Worker in a development environment
 
 .PHONY: publish deploy
 publish deploy: ## Deploy worker to Cloudflare
-	wrangler publish --verbose || echo "Try wrangler login?"
+	@wrangler publish --verbose || echo "Try wrangler login?"
 
 .PHONY: logs tail
 logs tail: ## Stream worker logs
@@ -24,6 +24,10 @@ logs tail: ## Stream worker logs
 .PHONY: test
 test: ## Test Rust code
 	cargo test
+
+.PHONY: lint
+lint: ## Lint Rust code
+	cargo clippy --all-targets -- --deny warnings
 
 .PHONY: test-rss
 test-rss: ## Test request to worker homepage (retrieve RSS feed)

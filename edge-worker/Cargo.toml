@@ -6,6 +6,13 @@ edition = "2021"
 description = "Forwarder for MP3 files in podcast feeds"
 license = "Apache-2.0/MIT"
 repository = "https://github.com/openpodcast/forwarder"
+keywords = [
+    "podcast",
+    "forwarder",
+    "rss",
+    "feed"
+]
+categories = ["multimedia::audio"]
 
 [lib]
 crate-type = ["cdylib", "rlib"]

@@ -5,8 +5,13 @@ use url::Url;
 const LINK_REGEX: &str = r#"<enclosure.*url=("|')(?P<url>.*?)("|')"#;
 
 /// Set an optional path prefix if specified
-/// Example:
+///
+/// # Example
+///
+/// ```
 /// let path_prefix = Some("/r/");
+/// ```
+/// produces URLs like:
 /// example.com/podcast.mp3 -> example.com/r/podcast.mp3
 fn set_prefix<'a>(url: &'a mut Url, prefix: &str) -> &'a mut Url {
     let old_path = url.path();
@@ -34,7 +39,7 @@ impl Replacer {
         let re = Regex::new(LINK_REGEX).unwrap();
         Self {
             host,
-            path_prefix: path_prefix.map(|s| s.into()),
+            path_prefix: path_prefix.map(Into::into),
             re,
         }
     }
@@ -131,7 +136,7 @@ mod tests {
         let link = Replacer::dummy().extract(enclosure);
         assert_eq!(
             vec!["https://example.com/podcast.mp3?awCollectionId=omr_abd3eb&amp;awEpisodeId=585475&amp;source=feed&amp;v=1636509931"], link
-        )
+        );
     }
 
     #[test]
@@ -164,7 +169,7 @@ mod tests {
         assert_eq!(
             vec!["https://stream.redcircle.com/episodes/41cfb14d-7091-482a-9d05-eb21219897ab/stream.link"], link
 
-        )
+        );
     }
 
     #[test]
@@ -182,7 +187,7 @@ mod tests {
                 "https://stream.redcircle.com/episodes/08ff2242-89e4-4533-8498-93d201ed6679/stream.link",
                 "https://foo.de/e/podcat.link?bar=baz&foo=123",
             ], links
-        )
+        );
     }
 
     #[test]
@@ -212,7 +217,7 @@ mod tests {
         "#;
         let expected = Url::parse("https://example.com/podcast.mp3?awCollectionId=omr_abd3eb&amp;awEpisodeId=585475&amp;source=feed&amp;v=1636509931").unwrap();
         let links = Replacer::dummy().extract_mp3s(item);
-        assert_eq!(vec![expected], links)
+        assert_eq!(vec![expected], links);
     }
 
     #[test]
@@ -227,7 +232,7 @@ mod tests {
                 <enclosure url="file:///example.com/podcast.mp3" type="audio/mpeg" length="96950025"/>
         "#;
         let links = Replacer::dummy().extract_mp3s(input);
-        assert_eq!(vec![expected], links)
+        assert_eq!(vec![expected], links);
     }
 
     #[test]
