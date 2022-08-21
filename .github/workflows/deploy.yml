@@ -10,9 +10,6 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./forwarder
     name: Deploy
     steps:
       - uses: actions/checkout@v2
@@ -20,11 +17,8 @@ jobs:
         uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
-      - name: Run cargo check
-        uses: actions-rs/cargo@v1
-        with:
-          command: check
       - name: Publish
         uses: cloudflare/wrangler-action@2.0.0
         with:
           apiToken: ${{ secrets.CF_API_TOKEN }}
+          workingDirectory: forwarder
