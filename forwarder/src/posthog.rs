@@ -63,6 +63,8 @@ struct InnerEvent {
 }
 
 impl InnerEvent {
+    // That's a false-positive
+    #[allow(clippy::missing_const_for_fn)]
     fn new(event: Event, api_key: String) -> Self {
         Self {
             api_key,
