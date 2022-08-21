@@ -1,12 +1,11 @@
 //! Edge worker for handling and modifying RSS feeds on the fly
 //! based on user agents
+
 mod forward;
 mod panic;
 mod rss;
 mod user_agent;
 use worker::*;
-
-const UPSTREAM_FEED_URL: &str = "https://feeds.megaphone.fm/GLT2733274547";
 
 use crate::rss::Replacer;
 
@@ -24,38 +23,44 @@ fn log_request(req: &Request) {
 pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Response> {
     log_request(&req);
 
-    // Get more helpful error messages written to the console in the case of a panic.
+    // Get more helpful error messages written to the console in the case of a
+    // panic.
     panic::set_panic_hook();
 
-    // Use the Router to handle matching endpoints, use ":name" placeholders, or "*name"
-    // catch-alls to match on specific patterns. Alternatively, use `Router::with_data(D)` to
-    // provide arbitrary data that will be accessible in each route via the `ctx.data()` method.
+    // Use the Router to handle matching endpoints, use ":name" placeholders, or
+    // "*name" catch-alls to match on specific patterns. Alternatively, use
+    // `Router::with_data(D)` to provide arbitrary data that will be accessible
+    // in each route via the `ctx.data()` method.
     let router = Router::new();
 
-    // Each route will get a `Request` for handling HTTP
-    // functionality and a `RouteContext` which you can use to get route parameters and
-    // Environment bindings like KV Stores, Durable Objects, Secrets, and Variables.
+    // Each route will get a `Request` for handling HTTP functionality and a
+    // `RouteContext` which you can use to get route parameters and Environment
+    // bindings like KV Stores, Durable Objects, Secrets, and Variables.
     router
-        .get_async("/", |request, _| async {
+        .get_async("/", |request, ctx| async move {
+            // Get feed URL from worker environment.
+            let upstream = ctx.var("UPSTREAM_FEED_URL")?.to_string();
+
             let user_agent = user_agent::from(request);
             let user_agent = match user_agent {
                 Ok(ua) => ua,
                 Err(e) => {
-                    // Silently ignore user agent errors to avoid breaking requests
+                    // Silently ignore user agent errors to avoid breaking
+                    // requests
                     console_log!("Error detecting user agent: {e}");
                     "unknown".to_string()
                 }
             };
             console_log!("Received request from {user_agent}");
 
-            // // Fetch original RSS feed
-            let mut orig_response = Fetch::Request(Request::new(UPSTREAM_FEED_URL, Method::Get)?)
+            // Fetch original RSS feed.
+            let mut orig_response = Fetch::Request(Request::new(&upstream, Method::Get)?)
                 .send()
                 .await?;
             let feed_content = orig_response.text().await?;
 
-            // Rewrite original feed with edge worker URLs, but keep original mp3 URLs
-            // and attach them as encoded string for future forwarding
+            // Rewrite original feed with edge worker URLs, but keep original
+            // mp3 URLs and attach them as encoded string for future forwarding
             let output =
                 Replacer::new("forwarder.mre.workers.dev", Some("/r")).replace(feed_content);
 
@@ -70,7 +75,7 @@ pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Respo
 
             Ok(response)
         })
-        .get("/r/*forward_url", |request, _context| {
+        .get("/r/*forward_url", |request, _ctx| {
             let cookie = request.headers().get("Cookie")?;
             console_log!("{cookie:?}");
             match forward::get(request, Some("/r")) {
@@ -93,7 +98,7 @@ pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Respo
             }
         })
         .get("/version", |_, ctx| {
-            let version = ctx.var("WORKERS_RS_VERSION")?.to_string();
+            let version = ctx.var("VERSION")?.to_string();
             Response::ok(version)
         })
         .run(req, env)

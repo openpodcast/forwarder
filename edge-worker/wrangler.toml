@@ -4,7 +4,8 @@ workers_dev = true
 compatibility_date = "2022-08-18"
 
 [vars]
-WORKERS_RS_VERSION = "0.0.10"
+VERSION = "0.1.0"
+UPSTREAM_FEED_URL = "https://feeds.megaphone.fm/GLT2733274547"
 
 [build]
 command = "cargo install -q worker-build && worker-build --release" # required
