@@ -8,32 +8,16 @@
 #![allow(clippy::future_not_send)]
 
 mod forward;
+mod helpers;
 mod panic;
 mod posthog;
 mod rss;
 mod user_agent;
-use worker::{console_log, event, Date, Env, Fetch, Method, Request, Response, Result, Router};
 
 use crate::rss::Replacer;
-
-fn log_request(req: &Request) {
-    console_log!(
-        "{} - [{}], located at: {:?}, cf: {:#?}",
-        Date::now().to_string(),
-        req.path(),
-        req.cf().coordinates().unwrap_or_default(),
-        req.cf()
-    );
-}
-
-// Gets the worker host URL (e.g. <worker.namespace.workers.dev>)
-fn host(req: &Request) -> Result<String> {
-    let url = req.url()?;
-    let host = url
-        .host()
-        .ok_or_else(|| worker::Error::RustError("Cannot get worker host".to_string()))?;
-    Ok(host.to_string())
-}
+use helpers::{host, log_request, upstream};
+use user_agent::user_agent;
+use worker::{console_log, event, Env, Fetch, Method, Request, Response, Result, Router};
 
 /// Handle RSS feed requests by forwarding them to the original URL and logging
 /// the request
@@ -62,19 +46,17 @@ pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Respo
     // bindings like KV Stores, Durable Objects, Secrets, and Variables.
     router
         .get_async("/", |request, ctx| async move {
-            // Get feed URL from worker environment.
-            let upstream = ctx.var("UPSTREAM_FEED_URL")?.to_string();
-
-            let user_agent = user_agent::from(&request).unwrap_or_else(|_| "unknown".to_string());
+            let upstream = &upstream(&ctx)?;
+            let user_agent = user_agent(&request);
             console_log!("Received request from {user_agent}");
 
             let response = posthog::Client::new(ctx.var("POSTHOG_API_KEY")?.to_string())
-                .send(posthog::Event::new("rss", &upstream).property("user_agent", user_agent)?)
+                .send(posthog::Event::new("rss", upstream).property("user_agent", user_agent)?)
                 .await?;
             console_log!("PostHog status: {:#?}", response);
 
             // Fetch original RSS feed.
-            let mut orig_response = Fetch::Request(Request::new(&upstream, Method::Get)?)
+            let mut orig_response = Fetch::Request(Request::new(upstream, Method::Get)?)
                 .send()
                 .await?;
             let feed_content = orig_response.text().await?;
@@ -92,11 +74,21 @@ pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Respo
 
             Ok(response)
         })
-        .get("/r/*forward_url", |request, _ctx| {
-            let cookie = request.headers().get("Cookie")?;
-            console_log!("{cookie:?}");
+        .get_async("/r/*forward_url", |request, ctx| async move {
             match forward::get(&request, Some("/r")) {
                 Ok(url) => {
+                    let mut event = posthog::Event::new("mp3", &upstream(&ctx)?)
+                        .property("user_agent", user_agent(&request))?
+                        .property("path", request.path())?;
+                    if let Some(reference) = ctx.param("ref") {
+                        event = event.property("upstream", reference)?;
+                    }
+
+                    let response = posthog::Client::new(ctx.var("POSTHOG_API_KEY")?.to_string())
+                        .send(event)
+                        .await?;
+                    console_log!("PostHog status: {:#?}", response);
+
                     println!("Forwarding to {url}");
                     let response = Response::redirect(url)?;
 

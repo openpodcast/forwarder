@@ -341,6 +341,11 @@ fn lookup(user_agent: &str) -> Option<String> {
     None
 }
 
+/// Get user agent from request
+pub fn user_agent(request: &Request) -> String {
+    from(request).unwrap_or_else(|_| "unknown".to_string())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
