@@ -141,6 +141,7 @@ dependencies = [
  "once_cell",
  "pretty_assertions",
  "regex",
+ "serde",
  "serde_json",
  "url",
  "urlencoding",

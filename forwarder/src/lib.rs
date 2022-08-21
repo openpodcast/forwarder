@@ -9,13 +9,10 @@
 
 mod forward;
 mod panic;
+mod posthog;
 mod rss;
 mod user_agent;
-use serde_json::json;
-use worker::{
-    console_log, event, wasm_bindgen::JsValue, Date, Env, Fetch, Method, Request, RequestInit,
-    Response, Result, Router,
-};
+use worker::{console_log, event, Date, Env, Fetch, Method, Request, Response, Result, Router};
 
 use crate::rss::Replacer;
 
@@ -71,28 +68,10 @@ pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Respo
             };
             console_log!("Received request from {user_agent}");
 
-            console_log!("Logging request to PostHog");
-
-            let r = Request::new_with_init(
-                "https://app.posthog.com/capture/",
-                &RequestInit {
-                    method: Method::Post,
-                    body: Some(JsValue::from_str(&format!(
-                        "{}",
-                        json!({
-                            "api_key": ctx.var("POSTHOG_API_KEY")?.to_string(),
-                            "event": "rss_feed_request",
-                            "properties": {
-                                "distinct_id": "user1",
-                                "user_agent": user_agent,
-                                "url": upstream,
-                            },
-                        })
-                    ))),
-                    ..RequestInit::default()
-                },
-            )?;
-            let response = Fetch::Request(r).send().await?;
+            let client = posthog::Client::new(ctx.var("POSTHOG_API_KEY")?.to_string());
+            let response = client
+                .send(posthog::Event::new("rss", &upstream).property("user_agent", user_agent)?)
+                .await?;
             console_log!("PostHog status: {:#?}", response);
 
             // Fetch original RSS feed.
