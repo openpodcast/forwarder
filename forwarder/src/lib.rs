@@ -14,7 +14,7 @@ mod posthog;
 mod rss;
 mod user_agent;
 
-use crate::rss::Replacer;
+use crate::{forward::extract_ref, rss::Replacer};
 use helpers::{host, log_request, upstream};
 use user_agent::user_agent;
 use worker::{console_log, event, Env, Fetch, Method, Request, Response, Result, Router};
@@ -81,8 +81,8 @@ pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Respo
                         .property("user_agent", user_agent(&request))?
                         .property("path", request.path())?;
 
-                    if let Some(reference) = url.query_pairs().find(|(k, _)| k == "ref") {
-                        event = event.property("upstream", reference)?;
+                    if let Ok(reference) = extract_ref(&request) {
+                        event = event.property("upstream", reference.as_ref())?;
                     }
 
                     let response = posthog::Client::new(ctx.var("POSTHOG_API_KEY")?.to_string())

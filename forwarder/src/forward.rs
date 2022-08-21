@@ -20,7 +20,7 @@ fn valid_forwarding_url(request: &Request, prefix: &str) -> Result<()> {
 }
 
 /// Extract redirect URL from ref parameter
-fn extract_ref(request: &Request) -> Result<Url> {
+pub fn extract_ref(request: &Request) -> Result<Url> {
     let html_decoded = html_escape::decode_html_entities(&request.url()?).to_string();
     let url = Url::parse(&html_decoded)?;
     if let Some((_, forward)) = url.query_pairs().find(|(k, _)| k == "ref") {
