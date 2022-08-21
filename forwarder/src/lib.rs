@@ -80,7 +80,7 @@ pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Respo
                     body: Some(JsValue::from_str(&format!(
                         "{}",
                         json!({
-                            "api_key": "phc_9ED9rP5zeJiXctQIAeern5RKHhFtmoWIIujzg90zisP",
+                            "api_key": ctx.var("POSTHOG_API_KEY")?.to_string(),
                             "event": "rss_feed_request",
                             "properties": {
                                 "distinct_id": "user1",

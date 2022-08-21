@@ -6,6 +6,7 @@ compatibility_date = "2022-08-18"
 [vars]
 VERSION = "0.1.0"
 UPSTREAM_FEED_URL = "https://feeds.megaphone.fm/GLT2733274547"
+POSTHOG_API_KEY = "phc_9ED9rP5zeJiXctQIAeern5RKHhFtmoWIIujzg90zisP"
 
 [build]
 command = "cargo install -q worker-build && worker-build --release" # required
