@@ -47,11 +47,17 @@ pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Respo
     router
         .get_async("/", |request, ctx| async move {
             let upstream = &upstream(&ctx)?;
-            let user_agent = user_agent(&request);
-            console_log!("Received request from {user_agent}");
+            let resolved_user_agent = user_agent(&request);
+            console_log!("Received request from {resolved_user_agent}");
 
             let response = posthog::Client::new(ctx.var("POSTHOG_API_KEY")?.to_string())
-                .send(posthog::Event::new("rss", upstream).property("user_agent", user_agent)?)
+                .send(
+                    posthog::Event::new("rss", upstream)
+                        .property("resolved_user_agent", resolved_user_agent)?
+                        .property("cloudflare", format!("{:#?}", request.cf()))?
+                        .property("coordinates", request.cf().coordinates())?
+                        .property("country", request.cf().country())?,
+                )
                 .await?;
             console_log!("PostHog status: {:#?}", response);
 
