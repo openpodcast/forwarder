@@ -7,16 +7,16 @@
 #![warn(clippy::cargo)]
 #![allow(clippy::future_not_send)]
 
+mod client;
 mod forward;
 mod helpers;
 mod panic;
 mod posthog;
 mod rss;
-mod user_agent;
 
 use crate::{forward::extract_ref, rss::Replacer};
+use client::client;
 use helpers::{host, log_request, upstream};
-use user_agent::user_agent;
 use worker::{console_log, event, Env, Fetch, Method, Request, Response, Result, Router};
 
 /// Handle RSS feed requests by forwarding them to the original URL and logging
@@ -47,16 +47,17 @@ pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Respo
     router
         .get_async("/", |request, ctx| async move {
             let upstream = &upstream(&ctx)?;
-            let resolved_user_agent = user_agent(&request);
-            console_log!("Received request from {resolved_user_agent}");
+            let client = client(&request);
+            console_log!("Received request from {client}");
 
             let response = posthog::Client::new(ctx.var("POSTHOG_API_KEY")?.to_string())
                 .send(
                     posthog::Event::new("rss", upstream)
-                        .property("resolved_user_agent", resolved_user_agent)?
+                        .property("client", client)?
                         .property("cloudflare", format!("{:#?}", request.cf()))?
                         .property("coordinates", request.cf().coordinates())?
-                        .property("country", request.cf().country())?,
+                        .property("country", request.cf().country())?
+                        .property("headers", format!("{:?}", request.headers()))?,
                 )
                 .await?;
             console_log!("PostHog status: {:#?}", response);
@@ -84,8 +85,12 @@ pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Respo
             match forward::get(&request, Some("/r")) {
                 Ok(url) => {
                     let mut event = posthog::Event::new("mp3", &upstream(&ctx)?)
-                        .property("user_agent", user_agent(&request))?
-                        .property("path", request.path())?;
+                        .property("user_agent", client(&request))?
+                        .property("cloudflare", format!("{:#?}", request.cf()))?
+                        .property("coordinates", request.cf().coordinates())?
+                        .property("country", request.cf().country())?
+                        .property("path", request.path())?
+                        .property("headers", format!("{:?}", request.headers()))?;
 
                     if let Ok(reference) = extract_ref(&request) {
                         event = event.property("upstream", reference.as_ref())?;

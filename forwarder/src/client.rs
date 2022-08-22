@@ -342,7 +342,7 @@ fn lookup(user_agent: &str) -> Option<String> {
 }
 
 /// Get user agent from request
-pub fn user_agent(request: &Request) -> String {
+pub fn client(request: &Request) -> String {
     from(request).unwrap_or_else(|_| "unknown".to_string())
 }
 
