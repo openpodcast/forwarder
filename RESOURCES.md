@@ -16,6 +16,11 @@
 - Duration of each episode
 - Description length per episode
 
+## Example Dashboards
+
+- https://help.simplecast.com/en/articles/2584128-simplecast-analytics-overview
+- https://springcast.fm/en/podcast-analytics/
+
 ## Sources
 
 - https://podcasters.apple.com/support/840-check-your-podcast-performance
@@ -26,7 +31,15 @@ https://help.apple.com/itc/podcasts_reading_server_requests/#/itcc0e1eaa94
 
 Discusses streaming vs downloading.
 
-> A streaming request from iTunes desktop client looks similar to a download request, except that the GET request for the episode is not preceded by a GET request for the podcast XML file.
+> A streaming request from iTunes desktop client looks similar to a download
+> request, except that the GET request for the episode is not preceded by a GET
+> request for the podcast XML file.
 
-Similar to the download requests, you can perform a more advanced analysis by adding the following line of code to the LogFormat line in your httpd.conf configuration to specify the range of bytes for each GET request compared to the total file size.
-\"%{Content-Range}o\"
+Similar to the download requests, you can perform a more advanced analysis by
+adding the following line of code to the LogFormat line in your httpd.conf
+configuration to specify the range of bytes for each GET request compared to the
+total file size. \"%{Content-Range}o\"
+
+## Server-Side Measurement
+
+https://iabtechlab.com/wp-content/uploads/2021/03/PodcastMeasurement_v2.1.pdf
