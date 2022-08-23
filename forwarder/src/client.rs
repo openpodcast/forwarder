@@ -161,6 +161,11 @@ static USER_AGENTS: Lazy<HashMap<String, String>> = Lazy::new(|| {
     );
     user_agents.insert("GEfektBot/1".to_owned(), "Govoren Efekt Bot".to_owned());
     user_agents.insert("gPodder/".to_owned(), "gPodder".to_owned());
+    user_agents.insert("GSA/".to_owned(), "Google Podcasts Android".to_owned());
+    user_agents.insert(
+        "GooglePodcasts/".to_owned(),
+        "Google Podcasts iOS".to_owned(),
+    );
     user_agents.insert("hackney/".to_owned(), "Hackney-unknown".to_owned());
     user_agents.insert("Headliner".to_owned(), "Headliner".to_owned());
     user_agents.insert("Hypefactors".to_owned(), "Hypefactors".to_owned());
@@ -334,7 +339,7 @@ pub fn from(request: &Request) -> Result<String> {
 #[must_use]
 fn lookup(user_agent: &str) -> Option<String> {
     for (pattern, agent) in USER_AGENTS.iter() {
-        if user_agent.starts_with(pattern) {
+        if user_agent.contains(pattern) {
             return Some(agent.clone());
         }
     }
@@ -365,5 +370,9 @@ mod tests {
             Some("Amazon Music Podcasts".to_owned())
         );
         assert_eq!(lookup("Something Random"), None);
+        assert_eq!(
+            lookup("UA: Mozilla/5.0 (Linux; Android 10; Pixel 3a XL Build/QQ3A.200805.001; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/86.0.4240.198 Mobile Safari/537.36 GSA/11.38.8.23.arm64"),
+            Some("Google Podcasts Android".to_owned())
+        );
     }
 }
