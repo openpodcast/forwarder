@@ -2,6 +2,39 @@ use once_cell::sync::Lazy;
 use std::collections::HashMap;
 use worker::{Error, Request, Result};
 
+/// Podcast Client information
+#[derive(PartialEq, Eq, PartialOrd, Ord, Debug)]
+pub struct Client {
+    /// Name of the Podcast client
+    name: String,
+    /// Whether the Podcast client is a bot
+    bot: bool,
+}
+
+impl Client {
+    /// Create a new `Client` from a name and optionally set a bot flag
+    fn new(name: &str) -> Self {
+        // At some point we might move bot detection to the user agent lookup
+        // table or alternatively do it with post-processing
+        // For now we just check if the name contains "bot"
+        let bot = name.to_lowercase().contains("bot");
+        Self {
+            name: name.to_string(),
+            bot,
+        }
+    }
+
+    /// Return the name of the client
+    pub fn name(&self) -> &str {
+        &self.name
+    }
+
+    /// Return whether the client is a bot
+    pub fn is_bot(&self) -> bool {
+        self.bot
+    }
+}
+
 /// Lookup table of user agents and the corresponding Podcast clients
 /// Source: <https://github.com/opawg/podcast-rss-useragents/blob/master/src/rss-ua.json>
 /// Each config consists of a pattern and a sanitized client name.
@@ -157,7 +190,7 @@ static USER_AGENTS: Lazy<HashMap<String, String>> = Lazy::new(|| {
     );
     user_agents.insert(
         "Googlebot".to_owned(),
-        "Google Podcasts and Search".to_owned(),
+        "Google Podcasts and Search [bot]".to_owned(),
     );
     user_agents.insert("GEfektBot/1".to_owned(), "Govoren Efekt Bot".to_owned());
     user_agents.insert("gPodder/".to_owned(), "gPodder".to_owned());
@@ -165,6 +198,10 @@ static USER_AGENTS: Lazy<HashMap<String, String>> = Lazy::new(|| {
     user_agents.insert(
         "GooglePodcasts/".to_owned(),
         "Google Podcasts iOS".to_owned(),
+    );
+    user_agents.insert(
+        "Google-Podcast".to_owned(),
+        "Google Play Music Podcasts".to_owned(),
     );
     user_agents.insert("hackney/".to_owned(), "Hackney-unknown".to_owned());
     user_agents.insert("Headliner".to_owned(), "Headliner".to_owned());
@@ -178,7 +215,7 @@ static USER_AGENTS: Lazy<HashMap<String, String>> = Lazy::new(|| {
     user_agents.insert("inoreader.com".to_owned(), "Inoreader".to_owned());
     user_agents.insert("Instacast/".to_owned(), "Instacast".to_owned());
     user_agents.insert("iVoox".to_owned(), "iVoox".to_owned());
-    user_agents.insert("Krzana bot".to_owned(), "Krzana".to_owned());
+    user_agents.insert("Krzana bot".to_owned(), "Krzana bot".to_owned());
     user_agents.insert("Leaf/".to_owned(), "Leaf-unknown".to_owned());
     user_agents.insert(
         "life-radio-konsole-app".to_owned(),
@@ -322,7 +359,7 @@ static USER_AGENTS: Lazy<HashMap<String, String>> = Lazy::new(|| {
 });
 
 /// Try to return a canonical user agent from the `user-agent` header
-pub fn from(request: &Request) -> Result<String> {
+pub fn from(request: &Request) -> Result<Client> {
     let ua_string = request.headers().get("user-agent")?;
     let ua_string = match ua_string {
         Some(ua) => ua,
@@ -337,18 +374,18 @@ pub fn from(request: &Request) -> Result<String> {
 
 /// Lookup the given user agent string in the table of known user agents
 #[must_use]
-fn lookup(user_agent: &str) -> Option<String> {
+fn lookup(user_agent: &str) -> Option<Client> {
     for (pattern, agent) in USER_AGENTS.iter() {
         if user_agent.contains(pattern) {
-            return Some(agent.clone());
+            return Some(Client::new(agent));
         }
     }
     None
 }
 
 /// Get Podcast client from request user agent
-pub fn client(request: &Request) -> String {
-    from(request).unwrap_or_else(|_| "Unknown Podcast Client".to_string())
+pub fn client(request: &Request) -> Client {
+    from(request).unwrap_or_else(|_| Client::new("Unknown Podcast Client"))
 }
 
 #[cfg(test)]
@@ -358,21 +395,21 @@ mod tests {
     #[test]
     fn test_lookup() {
         assert_eq!(
-            lookup("Spotify/8.6.88.1104 Android/30 (SM-A525F)"),
-            Some("Spotify".to_owned())
+            lookup("Spotify/8.6.88.1104 Android/30 (SM-A525F)").unwrap(),
+            Client::new("Spotify")
         );
         assert_eq!(
-            lookup("Spotify/8.6.82 iOS/15.1 (iPhone12,1)"),
-            Some("Spotify".to_owned())
+            lookup("Spotify/8.6.82 iOS/15.1 (iPhone12,1)").unwrap(),
+            Client::new("Spotify")
         );
         assert_eq!(
-            lookup("AmazonMusic/9.16.0 iPhone12,1 CFNetwork/1128.0.1 Darwin/19.6.0"),
-            Some("Amazon Music Podcasts".to_owned())
+            lookup("AmazonMusic/9.16.0 iPhone12,1 CFNetwork/1128.0.1 Darwin/19.6.0").unwrap(),
+            Client::new("Amazon Music Podcasts")
         );
         assert_eq!(lookup("Something Random"), None);
         assert_eq!(
-            lookup("UA: Mozilla/5.0 (Linux; Android 10; Pixel 3a XL Build/QQ3A.200805.001; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/86.0.4240.198 Mobile Safari/537.36 GSA/11.38.8.23.arm64"),
-            Some("Google Podcasts Android".to_owned())
+            lookup("UA: Mozilla/5.0 (Linux; Android 10; Pixel 3a XL Build/QQ3A.200805.001; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/86.0.4240.198 Mobile Safari/537.36 GSA/11.38.8.23.arm64").unwrap(),
+            Client::new("Google Podcasts Android")
         );
     }
 }

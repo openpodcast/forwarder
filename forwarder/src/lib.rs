@@ -24,7 +24,8 @@ use worker::{
 /// Create `PostHog` event from Cloudflare request
 fn create_cloudflare_event<D>(request: &Request, ctx: &RouteContext<D>) -> Result<posthog::Event> {
     let mut event = posthog::Event::new("mp3", &upstream(ctx)?)
-        .property("client", client(request))?
+        .property("client", client(request).name())?
+        .property("is_bot", client(request).is_bot())?
         .property("cloudflare", format!("{:#?}", request.cf()))?
         .property("country", request.cf().country())?
         .property("path", request.path())?;
@@ -78,7 +79,7 @@ pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Respo
         .get_async("/", |request, ctx| async move {
             let upstream = &upstream(&ctx)?;
             let client = client(&request);
-            console_log!("Received request from {client}");
+            console_log!("Received request from {}", client.name());
 
             let event = create_cloudflare_event(&request, &ctx)?;
             let response = posthog::Client::new(ctx.var("POSTHOG_API_KEY")?.to_string())
