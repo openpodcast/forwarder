@@ -62,6 +62,9 @@ pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Respo
             for (key, value) in request.headers() {
                 event = event.property(key, value)?;
             }
+            if let Ok(ip) = request.headers().get("x-real-ip") {
+                event = event.property("ip", ip)?;
+            }
 
             let response = posthog::Client::new(ctx.var("POSTHOG_API_KEY")?.to_string())
                 .send(event)
@@ -95,6 +98,7 @@ pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Respo
                         .property("cloudflare", format!("{:#?}", request.cf()))?
                         .property("country", request.cf().country())?
                         .property("path", request.path())?;
+
                     if let Some((latitude, longitude)) = request.cf().coordinates() {
                         event = event
                             .property("latitude", latitude)?
@@ -102,6 +106,9 @@ pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Respo
                     }
                     for (key, value) in request.headers() {
                         event = event.property(key, value)?;
+                    }
+                    if let Ok(ip) = request.headers().get("x-real-ip") {
+                        event = event.property("ip", ip)?;
                     }
 
                     if let Ok(reference) = extract_ref(&request) {
