@@ -17,7 +17,37 @@ mod rss;
 use crate::{forward::extract_ref, rss::Replacer};
 use client::client;
 use helpers::{host, log_request, upstream};
-use worker::{console_log, event, Env, Fetch, Method, Request, Response, Result, Router};
+use worker::{
+    console_log, event, Env, Fetch, Method, Request, Response, Result, RouteContext, Router,
+};
+
+/// Create `PostHog` event from Cloudflare request
+fn create_cloudflare_event<D>(request: &Request, ctx: &RouteContext<D>) -> Result<posthog::Event> {
+    let mut event = posthog::Event::new("mp3", &upstream(ctx)?)
+        .property("client", client(request))?
+        .property("cloudflare", format!("{:#?}", request.cf()))?
+        .property("country", request.cf().country())?
+        .property("path", request.path())?;
+
+    if let Some((latitude, longitude)) = request.cf().coordinates() {
+        event = event
+            .property("latitude", latitude)?
+            .property("longitude", longitude)?;
+    }
+    for (key, value) in request.headers() {
+        event = event.property(key, value)?;
+    }
+    // Overwrite ip for GeoIP lookup
+    if let Ok(ip) = request.headers().get("x-real-ip") {
+        event = event.property("ip", ip)?;
+    }
+
+    // Upstream ref is only set for mp3 requests
+    if let Ok(reference) = extract_ref(request) {
+        event = event.property("upstream", reference.as_ref())?;
+    }
+    Ok(event)
+}
 
 /// Handle RSS feed requests by forwarding them to the original URL and logging
 /// the request
@@ -50,22 +80,7 @@ pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Respo
             let client = client(&request);
             console_log!("Received request from {client}");
 
-            let mut event = posthog::Event::new("rss", upstream)
-                .property("client", client)?
-                .property("cloudflare", format!("{:#?}", request.cf()))?
-                .property("country", request.cf().country())?;
-            if let Some((latitude, longitude)) = request.cf().coordinates() {
-                event = event
-                    .property("latitude", latitude)?
-                    .property("longitude", longitude)?;
-            }
-            for (key, value) in request.headers() {
-                event = event.property(key, value)?;
-            }
-            if let Ok(ip) = request.headers().get("x-real-ip") {
-                event = event.property("ip", ip)?;
-            }
-
+            let event = create_cloudflare_event(&request, &ctx)?;
             let response = posthog::Client::new(ctx.var("POSTHOG_API_KEY")?.to_string())
                 .send(event)
                 .await?;
@@ -93,28 +108,7 @@ pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Respo
         .get_async("/r/*forward_url", |request, ctx| async move {
             match forward::get(&request, Some("/r")) {
                 Ok(url) => {
-                    let mut event = posthog::Event::new("mp3", &upstream(&ctx)?)
-                        .property("client", client(&request))?
-                        .property("cloudflare", format!("{:#?}", request.cf()))?
-                        .property("country", request.cf().country())?
-                        .property("path", request.path())?;
-
-                    if let Some((latitude, longitude)) = request.cf().coordinates() {
-                        event = event
-                            .property("latitude", latitude)?
-                            .property("longitude", longitude)?;
-                    }
-                    for (key, value) in request.headers() {
-                        event = event.property(key, value)?;
-                    }
-                    if let Ok(ip) = request.headers().get("x-real-ip") {
-                        event = event.property("ip", ip)?;
-                    }
-
-                    if let Ok(reference) = extract_ref(&request) {
-                        event = event.property("upstream", reference.as_ref())?;
-                    }
-
+                    let event = create_cloudflare_event(&request, &ctx)?;
                     let response = posthog::Client::new(ctx.var("POSTHOG_API_KEY")?.to_string())
                         .send(event)
                         .await?;
