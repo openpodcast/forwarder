@@ -50,15 +50,21 @@ pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Respo
             let client = client(&request);
             console_log!("Received request from {client}");
 
+            let mut event = posthog::Event::new("rss", upstream)
+                .property("client", client)?
+                .property("cloudflare", format!("{:#?}", request.cf()))?
+                .property("country", request.cf().country())?;
+            if let Some((latitude, longitude)) = request.cf().coordinates() {
+                event = event
+                    .property("latitude", latitude)?
+                    .property("longitude", longitude)?;
+            }
+            for (key, value) in request.headers() {
+                event = event.property(key, value)?;
+            }
+
             let response = posthog::Client::new(ctx.var("POSTHOG_API_KEY")?.to_string())
-                .send(
-                    posthog::Event::new("rss", upstream)
-                        .property("client", client)?
-                        .property("cloudflare", format!("{:#?}", request.cf()))?
-                        .property("coordinates", request.cf().coordinates())?
-                        .property("country", request.cf().country())?
-                        .property("headers", format!("{:?}", request.headers()))?,
-                )
+                .send(event)
                 .await?;
             console_log!("PostHog status: {:#?}", response);
 
@@ -87,10 +93,16 @@ pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Respo
                     let mut event = posthog::Event::new("mp3", &upstream(&ctx)?)
                         .property("user_agent", client(&request))?
                         .property("cloudflare", format!("{:#?}", request.cf()))?
-                        .property("coordinates", request.cf().coordinates())?
                         .property("country", request.cf().country())?
-                        .property("path", request.path())?
-                        .property("headers", format!("{:?}", request.headers()))?;
+                        .property("path", request.path())?;
+                    if let Some((latitude, longitude)) = request.cf().coordinates() {
+                        event = event
+                            .property("latitude", latitude)?
+                            .property("longitude", longitude)?;
+                    }
+                    for (key, value) in request.headers() {
+                        event = event.property(key, value)?;
+                    }
 
                     if let Ok(reference) = extract_ref(&request) {
                         event = event.property("upstream", reference.as_ref())?;
