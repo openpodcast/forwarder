@@ -68,6 +68,10 @@ static USER_AGENTS: Lazy<HashMap<String, String>> = Lazy::new(|| {
         "Podcasts/".to_owned(),
         "Apple Podcasts - via app".to_owned(),
     );
+    user_agents.insert(
+        "AppleCoreMedia/".to_owned(),
+        "Apple Podcasts - via app".to_owned(),
+    );
     user_agents.insert("Balados/".to_owned(), "Apple Podcasts - via app".to_owned());
     user_agents.insert("Balados/".to_owned(), "Apple Podcasts - via app".to_owned());
     user_agents.insert(
@@ -410,6 +414,11 @@ mod tests {
         assert_eq!(
             lookup("UA: Mozilla/5.0 (Linux; Android 10; Pixel 3a XL Build/QQ3A.200805.001; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/86.0.4240.198 Mobile Safari/537.36 GSA/11.38.8.23.arm64").unwrap(),
             Client::new("Google Podcasts Android")
+        );
+        assert_eq!(
+            lookup("AppleCoreMedia/1.0.0.21G72 (Macintosh; U; Intel Mac OS X 12_5; en_us)")
+                .unwrap(),
+            Client::new("Apple Podcasts - via app")
         );
     }
 }
