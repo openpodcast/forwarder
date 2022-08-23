@@ -125,13 +125,13 @@ pub mod tests {
             "event": "rss_feed_request",
             "properties": {
                 "distinct_id": "user1",
-                "user_agent": "sdf",
+                "client": "Podcast Client",
                 "url": "https://www.example.com",
             },
         });
 
         let event = Event::new("rss_feed_request", "user1")
-            .property("user_agent", "sdf")?
+            .property("client", "Podcast Client")?
             .property("url", "https://www.example.com")?;
 
         let inner_event = InnerEvent::new(event, "api_key".to_string());
@@ -147,7 +147,7 @@ pub mod tests {
     #[test]
     fn test_child_map() {
         let event = Event::new("rss_feed_request", "user1")
-            .property("user_agent", "sdf")
+            .property("client", "Podcast Client")
             .unwrap();
         let mut child_map = HashMap::new();
         child_map.insert("child_key1", "child_value1");

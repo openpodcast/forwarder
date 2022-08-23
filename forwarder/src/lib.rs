@@ -94,7 +94,7 @@ pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Respo
             match forward::get(&request, Some("/r")) {
                 Ok(url) => {
                     let mut event = posthog::Event::new("mp3", &upstream(&ctx)?)
-                        .property("user_agent", client(&request))?
+                        .property("client", client(&request))?
                         .property("cloudflare", format!("{:#?}", request.cf()))?
                         .property("country", request.cf().country())?
                         .property("path", request.path())?;

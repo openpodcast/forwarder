@@ -2,9 +2,9 @@ use once_cell::sync::Lazy;
 use std::collections::HashMap;
 use worker::{Error, Request, Result};
 
-/// Lookup table of user agents
+/// Lookup table of user agents and the corresponding Podcast clients
 /// Source: <https://github.com/opawg/podcast-rss-useragents/blob/master/src/rss-ua.json>
-/// Each config consists of a pattern and a cleaned up user agent string.
+/// Each config consists of a pattern and a sanitized client name.
 static USER_AGENTS: Lazy<HashMap<String, String>> = Lazy::new(|| {
     let mut user_agents = HashMap::new();
     user_agents.insert("Acast".to_owned(), "Acast".to_owned());
@@ -341,9 +341,9 @@ fn lookup(user_agent: &str) -> Option<String> {
     None
 }
 
-/// Get user agent from request
+/// Get Podcast client from request user agent
 pub fn client(request: &Request) -> String {
-    from(request).unwrap_or_else(|_| "unknown".to_string())
+    from(request).unwrap_or_else(|_| "Unknown Podcast Client".to_string())
 }
 
 #[cfg(test)]
@@ -364,5 +364,6 @@ mod tests {
             lookup("AmazonMusic/9.16.0 iPhone12,1 CFNetwork/1128.0.1 Darwin/19.6.0"),
             Some("Amazon Music Podcasts".to_owned())
         );
+        assert_eq!(lookup("Something Random"), None);
     }
 }
