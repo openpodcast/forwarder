@@ -23,6 +23,14 @@ wrangler publish
 curl -A "Spotify/1.0" -c - https://forwarder.mre.workers.dev
 ```
 
+## Worker Config
+
+To deploy different workers you can change the path to the wrangler config with
+
+```bash
+CONFIG=wrangler-redcircle.toml make deploy
+```
+
 ## Implementation steps
 
 1. RSS feed edge worker replaces `<enclosure url="URL" ... />` elements by new URL of edge worker with the original URL encoded.

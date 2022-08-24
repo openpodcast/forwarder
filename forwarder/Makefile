@@ -1,25 +1,27 @@
 # Needed SHELL since I'm using zsh
 SHELL := /bin/bash
 
+CONFIG ?= wrangler.toml
+
 .PHONY: help
 help: ## This help message
 	@echo -e "$$(grep -hE '^\S+:.*##' $(MAKEFILE_LIST) | sed -e 's/:.*##\s*/:/' -e 's/^\(.\+\):\(.*\)/\\x1b[36m\1\\x1b[m:\2/' | column -c2 -t -s :)"
 
 .PHONY: build
 build: # Compile project to WebAssembly
-	wrangler build
+	wrangler build --config $(CONFIG)
 
 .PHONY: dev 
 dev: ## Run Worker in a development environment
-	wrangler dev 
+	wrangler dev --config $(CONFIG)
 
 .PHONY: publish deploy
 publish deploy: ## Deploy worker to Cloudflare
-	@wrangler publish --verbose || echo "Try wrangler login?"
+	@wrangler publish --config $(CONFIG) --verbose || echo "Try wrangler login?"
 
 .PHONY: logs tail
 logs tail: ## Stream worker logs
-	wrangler tail --verbose --format=pretty
+	wrangler tail --config $(CONFIG) --verbose --format=pretty
 
 .PHONY: test
 test: ## Test Rust code
