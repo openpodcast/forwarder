@@ -21,9 +21,20 @@ use worker::{
     console_log, event, Env, Fetch, Method, Request, Response, Result, RouteContext, Router,
 };
 
+fn request_kind(path: String) -> String {
+    if path == "/" {
+        "rss".to_string()
+    } else if path.starts_with("/r/") {
+        "mp3".to_string()
+    } else {
+        path
+    }
+}
+
 /// Create `PostHog` event from Cloudflare request
 fn create_cloudflare_event<D>(request: &Request, ctx: &RouteContext<D>) -> Result<posthog::Event> {
-    let mut event = posthog::Event::new("mp3", &upstream(ctx)?)
+    let kind = request_kind(request.path());
+    let mut event = posthog::Event::new(&kind, &upstream(ctx)?)
         .property("client", client(request).name())?
         .property("is_bot", client(request).is_bot())?
         .property("cloudflare", format!("{:#?}", request.cf()))?
