@@ -51,7 +51,7 @@ fn create_cloudflare_event<D>(request: &Request, ctx: &RouteContext<D>) -> Resul
     }
     // Overwrite ip for GeoIP lookup
     if let Ok(ip) = request.headers().get("x-real-ip") {
-        event = event.property("ip", ip)?;
+        event = event.property("$ip", ip)?;
     }
 
     // Upstream ref is only set for mp3 requests
