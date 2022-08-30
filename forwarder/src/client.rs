@@ -342,6 +342,10 @@ static USER_AGENTS: Lazy<HashMap<String, String>> = Lazy::new(|| {
         "tweetedtimes.com".to_owned(),
         "The Tweeted Times".to_owned(),
     );
+    user_agents.insert(
+        "Expanse, a Palo Alto Networks company".to_owned(),
+        "Expanse [bot]".to_owned(),
+    );
     user_agents.insert("Tiny Tiny RSS".to_owned(), "Tiny Tiny RSS".to_owned());
     user_agents.insert("TPA/".to_owned(), "TPA-unknown".to_owned());
     user_agents.insert("trendictionbot".to_owned(), "Trendiction Bot".to_owned());
@@ -419,6 +423,12 @@ mod tests {
             lookup("AppleCoreMedia/1.0.0.21G72 (Macintosh; U; Intel Mac OS X 12_5; en_us)")
                 .unwrap(),
             Client::new("Apple Podcasts - via app")
+        );
+
+        assert_eq!(
+            lookup("Expanse, a Palo Alto Networks company, searches across the global IPv4 space multiple times per day to identify customers&#39; presences on the Internet. If you would like to be excluded from our scans, please send IP addresses/domains to: scaninfo@paloaltonetworks.com")
+                .unwrap(),
+            Client::new("Expanse [bot]")
         );
     }
 }
