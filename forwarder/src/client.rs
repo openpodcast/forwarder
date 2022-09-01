@@ -64,6 +64,7 @@ static USER_AGENTS: Lazy<HashMap<String, String>> = Lazy::new(|| {
         "Apple iTunes Store".to_owned(),
     );
     user_agents.insert("iTMS".to_owned(), "Apple Podcasts - directory".to_owned());
+    user_agents.insert("Pocket Casts".to_owned(), "Pocket Casts".to_owned());
     user_agents.insert(
         "Podcasts/".to_owned(),
         "Apple Podcasts - via app".to_owned(),
