@@ -266,6 +266,7 @@ static USER_AGENTS: Lazy<HashMap<String, String>> = Lazy::new(|| {
     );
     user_agents.insert("Podbay/".to_owned(), "Podbay".to_owned());
     user_agents.insert("PodbeanFeedReader/".to_owned(), "Podbean".to_owned());
+    user_agents.insert("Podbean/".to_owned(), "Podbean".to_owned());
     user_agents.insert("PodcastGuru".to_owned(), "Podcast Guru".to_owned());
     user_agents.insert("Podcastindex.org/".to_owned(), "Podcast Index".to_owned());
     user_agents.insert("PodcastRepublic/".to_owned(), "Podcast Republic".to_owned());
@@ -309,6 +310,7 @@ static USER_AGENTS: Lazy<HashMap<String, String>> = Lazy::new(|| {
     );
     user_agents.insert("axios/0.19.1".to_owned(), "radio.com".to_owned());
     user_agents.insert("RadioCut/".to_owned(), "Radiocut".to_owned());
+    user_agents.insert("radiofeed/".to_owned(), "Radiofeed".to_owned());
     user_agents.insert("Radioline".to_owned(), "Radioline".to_owned());
     user_agents.insert("RadioPublic-Web/".to_owned(), "RadioPublic".to_owned());
     user_agents.insert("reason/".to_owned(), "Reason".to_owned());
