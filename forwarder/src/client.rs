@@ -317,6 +317,7 @@ static USER_AGENTS: Lazy<HashMap<String, String>> = Lazy::new(|| {
     user_agents.insert("Reedah/1".to_owned(), "Reedah".to_owned());
     user_agents.insert("Reeder/".to_owned(), "Reeder".to_owned());
     user_agents.insert("Repod/".to_owned(), "Repod".to_owned());
+    user_agents.insert("Rephonic/".to_owned(), "Rephonic".to_owned());
     user_agents.insert("rssapi.net".to_owned(), "RSS API".to_owned());
     user_agents.insert("RSSOwl/".to_owned(), "RSSOwl".to_owned());
     user_agents.insert("RSSRadio".to_owned(), "RSSRadio".to_owned());
@@ -366,6 +367,14 @@ static USER_AGENTS: Lazy<HashMap<String, String>> = Lazy::new(|| {
     user_agents.insert("YandexBot/".to_owned(), "YandexBot".to_owned());
     user_agents.insert("Zapier".to_owned(), "Zapier".to_owned());
     user_agents.insert("ZoominfoBot".to_owned(), "Zoominfo".to_owned());
+
+    // Scripts and libraries get categorized as bots
+    user_agents.insert("Go-http-client/".to_owned(), "Script [bot]".to_owned());
+    user_agents.insert("node-fetch/".to_owned(), "Script [bot]".to_owned());
+    user_agents.insert("python-requests/".to_owned(), "Script [bot]".to_owned());
+    user_agents.insert("UniversalFeedParser/".to_owned(), "Script [bot]".to_owned());
+    user_agents.insert("Ruby".to_owned(), "Script [bot]".to_owned());
+
     user_agents
 });
 
