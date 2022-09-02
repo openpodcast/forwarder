@@ -99,6 +99,7 @@ static USER_AGENTS: Lazy<HashMap<String, String>> = Lazy::new(|| {
         "Podkaster/".to_owned(),
         "Apple Podcasts - via app".to_owned(),
     );
+    user_agents.insert("PodkiteCrawler/".to_owned(), "Podkite".to_owned());
     user_agents.insert(
         "Podcaster/".to_owned(),
         "Apple Podcasts - via app".to_owned(),
