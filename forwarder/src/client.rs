@@ -221,6 +221,7 @@ static USER_AGENTS: Lazy<HashMap<String, String>> = Lazy::new(|| {
         ("Radioline", "Radioline"),
         ("RadioPublic-Web/", "RadioPublic"),
         ("reason/", "Reason"),
+        ("RedCircle", "RedCircle"),
         ("Reedah/1", "Reedah"),
         ("Reeder/", "Reeder"),
         ("Repod/", "Repod"),
@@ -244,6 +245,7 @@ static USER_AGENTS: Lazy<HashMap<String, String>> = Lazy::new(|| {
         ("StitcherBot", "Stitcher"),
         ("Subcast/", "Subcast-unknown"),
         ("Superfeedr bot", "Superfeedr"),
+        ("taddy.org/", "taddy"),
         ("TapTapes", "Taptapes"),
         ("theoldreader.com", "The Old Reader"),
         ("tweetedtimes.com", "The Tweeted Times"),
@@ -271,6 +273,7 @@ static USER_AGENTS: Lazy<HashMap<String, String>> = Lazy::new(|| {
         ("python-requests/", "Script [bot]"),
         ("UniversalFeedParser/", "Script [bot]"),
         ("Ruby", "Script [bot]"),
+        ("lychee/", "Script [bot]"),
     ]
     .iter()
     .map(|(k, v)| (k.to_string(), v.to_string()))
