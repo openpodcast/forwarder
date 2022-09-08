@@ -268,12 +268,13 @@ static USER_AGENTS: Lazy<HashMap<String, String>> = Lazy::new(|| {
         ("Zapier", "Zapier"),
         ("ZoominfoBot", "Zoominfo"),
         // Scripts and libraries get categorized as bots
+        ("axios", "Script [bot]"),
         ("Go-http-client/", "Script [bot]"),
         ("node-fetch/", "Script [bot]"),
-        ("python-requests/", "Script [bot]"),
-        ("UniversalFeedParser/", "Script [bot]"),
-        ("Ruby", "Script [bot]"),
         ("lychee/", "Script [bot]"),
+        ("python-requests/", "Script [bot]"),
+        ("Ruby", "Script [bot]"),
+        ("UniversalFeedParser/", "Script [bot]"),
     ]
     .iter()
     .map(|(k, v)| (k.to_string(), v.to_string()))
