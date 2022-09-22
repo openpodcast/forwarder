@@ -16,7 +16,7 @@ mod rss;
 
 use crate::{forward::extract_ref, rss::Replacer};
 use client::client;
-use helpers::{host, log_request, upstream};
+use helpers::{log_request, upstream};
 use worker::{
     console_log, event, Env, Fetch, Method, Request, Response, Result, RouteContext, Router,
 };
@@ -108,7 +108,7 @@ pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Respo
 
             // Rewrite original feed with edge worker URLs, but keep original
             // mp3 URLs and attach them as encoded string for future forwarding
-            let output = Replacer::new(host(&request)?, Some("/r")).replace(feed_content);
+            let output = Replacer::new(request.url()?, Some("/r")).replace(feed_content);
 
             // Pass original request headers to client
             let mut response = Response::ok(output)?.with_headers(orig_response.headers().clone());
