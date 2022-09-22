@@ -87,16 +87,18 @@ pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Respo
     // `RouteContext` which you can use to get route parameters and Environment
     // bindings like KV Stores, Durable Objects, Secrets, and Variables.
     router
+        // Request for RSS feed
         .get_async("/", |request, ctx| async move {
             let upstream = &upstream(&ctx)?;
             let client = client(&request);
             console_log!("Received request from {}", client.name());
 
-            let event = create_cloudflare_event(&request, &ctx)?;
-            let response = posthog::Client::new(ctx.var("POSTHOG_API_KEY")?.to_string())
-                .send(event)
-                .await?;
-            console_log!("PostHog status: {:#?}", response);
+            // Comment out the following line to enable RSS feed logging in PostHog
+            // let event = create_cloudflare_event(&request, &ctx)?;
+            // let response = posthog::Client::new(ctx.var("POSTHOG_API_KEY")?.to_string())
+            //     .send(event)
+            //     .await?;
+            // console_log!("PostHog status: {:#?}", response);
 
             // Fetch original RSS feed.
             let mut orig_response = Fetch::Request(Request::new(upstream, Method::Get)?)
