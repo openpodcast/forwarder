@@ -46,6 +46,7 @@ static USER_AGENTS: Lazy<HashMap<String, String>> = Lazy::new(|| {
         ("AirPodcasts/", "AirPodcasts-unknown"),
         ("Airr Podcatcher", "Airr"),
         ("Amazon Music Podcast", "Amazon Music Podcasts"),
+        ("AmazonMusic/", "Amazon Music Podcasts"),
         ("AntennaPod/", "AntennaPod"),
         ("anytime_podcast_player", "Anytime podcast player"),
         ("iTunes/", "Apple iTunes"),
