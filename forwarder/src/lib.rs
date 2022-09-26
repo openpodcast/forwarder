@@ -88,6 +88,20 @@ pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Respo
     // `RouteContext` which you can use to get route parameters and Environment
     // bindings like KV Stores, Durable Objects, Secrets, and Variables.
     router
+        .head_async("/", |request, ctx| async move {
+            let upstream = &upstream(&ctx)?;
+            // Fetch original RSS feed.
+            let mut req = Request::new(upstream, Method::Head)?;
+            // Append request headers to the forwarded request
+            let headers = req.headers_mut()?;
+            for (key, value) in request.headers() {
+                headers.append(&key, &value)?;
+            }
+
+            let response = Fetch::Request(req).send().await?;
+
+            Ok(response)
+        })
         // Request for RSS feed
         .get_async("/", |request, ctx| async move {
             let upstream = &upstream(&ctx)?;
