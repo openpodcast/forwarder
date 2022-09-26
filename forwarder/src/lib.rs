@@ -14,9 +14,10 @@ mod panic;
 mod posthog;
 mod rss;
 
-use crate::{forward::extract_ref, rss::Replacer};
+use crate::{forward::extract_ref, helpers::website, rss::Replacer};
 use client::client;
 use helpers::{log_request, upstream};
+use url::Url;
 use worker::{
     console_log, event, Env, Fetch, Method, Request, Response, Result, RouteContext, Router,
 };
@@ -108,7 +109,12 @@ pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Respo
 
             // Rewrite original feed with edge worker URLs, but keep original
             // mp3 URLs and attach them as encoded string for future forwarding
-            let output = Replacer::new(request.url()?, Some("/r")).replace(feed_content);
+            // Also overwrite the link field to the website URL
+            let website = &website(&ctx)?;
+            // convert to URL
+            let website = Url::parse(website)?;
+
+            let output = Replacer::new(website, request.url()?, Some("/r")).replace(feed_content);
 
             // Pass original request headers to client
             let mut response = Response::ok(output)?.with_headers(orig_response.headers().clone());

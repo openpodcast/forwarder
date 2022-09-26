@@ -15,3 +15,8 @@ pub fn log_request(req: &Request) {
 pub fn upstream<D>(ctx: &RouteContext<D>) -> Result<String> {
     Ok(ctx.var("UPSTREAM_FEED_URL")?.to_string())
 }
+
+/// Get the website URL from the worker config
+pub fn website<D>(ctx: &RouteContext<D>) -> Result<String> {
+    Ok(ctx.var("WEBSITE_URL")?.to_string())
+}

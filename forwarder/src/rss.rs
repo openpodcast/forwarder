@@ -24,8 +24,10 @@ fn set_prefix<'a>(url: &'a mut Url, prefix: &str) -> &'a mut Url {
 /// Replaces the domain of mp3 links inside RSS enclosure elements
 /// as well as the link elements
 pub struct Replacer {
-    /// New domain for replaced URLs
-    domain: Url,
+    /// Override for the `<link>` element
+    link_url: Url,
+    /// New URL prefix for replaced mp3 URLs
+    forward_url: Url,
     /// Optional path prefix for replaced URLs
     path_prefix: Option<String>,
     /// Regex for finding `<link>` elements
@@ -37,9 +39,10 @@ pub struct Replacer {
 impl Replacer {
     #[must_use]
     /// Construct a replacer with the given forwarder domain
-    pub fn new(domain: Url, path_prefix: Option<&str>) -> Self {
+    pub fn new(link_url: Url, forward_url: Url, path_prefix: Option<&str>) -> Self {
         Self {
-            domain,
+            link_url,
+            forward_url,
             path_prefix: path_prefix.map(Into::into),
             link_regex: Regex::new(LINK_REGEX).unwrap(),
             enclosure_regex: Regex::new(ENCLOSURE_URL_REGEX).unwrap(),
@@ -70,7 +73,7 @@ impl Replacer {
     fn replace_links(&self, input: &str) -> String {
         self.link_regex
             .replace_all(input, |_caps: &regex::Captures| {
-                format!("<link>{}</link>", self.domain)
+                format!("<link>{}</link>", self.link_url)
             })
             .to_string()
     }
@@ -86,7 +89,7 @@ impl Replacer {
         let lookup_table: HashMap<String, String> = mp3s
             .into_iter()
             .map(|orig| {
-                let mut replaced = self.domain.clone();
+                let mut replaced = self.forward_url.clone();
 
                 replaced.set_path(orig.path());
 
@@ -100,7 +103,7 @@ impl Replacer {
 
                 (
                     orig.as_str().to_string(),
-                    // Escape `&` character as html entities to make feed readable in browser
+                    // Escape `&` character as HTML entities to make feed readable in browser
                     // See https://stackoverflow.com/a/17918240/270334
                     // See https://docs.rs/html-escape/latest/html_escape/
                     html_escape::encode_text(replaced.as_str()).to_string(),
@@ -119,7 +122,8 @@ impl Replacer {
     #[cfg(test)]
     fn dummy() -> Self {
         Self {
-            domain: Url::parse("http://test_dummy.com").unwrap(),
+            link_url: Url::parse("http://example.com/podcast").unwrap(),
+            forward_url: Url::parse("http://test_dummy.com").unwrap(),
             path_prefix: None,
             link_regex: Regex::new(LINK_REGEX).unwrap(),
             enclosure_regex: Regex::new(ENCLOSURE_URL_REGEX).unwrap(),
@@ -250,8 +254,12 @@ mod tests {
     fn test_replace_mp3() {
         let old_mp3 = r#"<enclosure url="https://example.com/podcast.mp3" type="audio/mpeg" length="96950025"/>"#;
         let new_mp3 = r#"<enclosure url="http://foo.org/podcast.mp3?ref=https%3A%2F%2Fexample.com%2Fpodcast.mp3" type="audio/mpeg" length="96950025"/>"#;
-        let output =
-            Replacer::new(Url::parse("http://foo.org").unwrap(), None).replace(old_mp3.to_string());
+        let output = Replacer::new(
+            Url::parse("http://example.com/podcast").unwrap(),
+            Url::parse("http://foo.org").unwrap(),
+            None,
+        )
+        .replace(old_mp3.to_string());
         assert_eq!(output, new_mp3);
     }
 
@@ -275,8 +283,12 @@ mod tests {
             <enclosure url="lol" type="audio/mpeg" length="96950025"/>
             <enclosure />
         "#;
-        let output = Replacer::new(Url::parse("https://example.org").unwrap(), None)
-            .replace(input.to_string());
+        let output = Replacer::new(
+            Url::parse("http://example.com/podcast").unwrap(),
+            Url::parse("https://example.org").unwrap(),
+            None,
+        )
+        .replace(input.to_string());
         assert_eq!(output, expected);
     }
 
@@ -296,8 +308,12 @@ mod tests {
             <enclosure url="https://example.org/r/some/podcast3.mp3?ref=https%3A%2F%2Ffoo.com%2Fsome%2Fpodcast3.mp3%3Fbla%3Dblub123" type="audio/mpeg" length="96950025"></enclosure>
             <enclosure />
         "#;
-        let output = Replacer::new(Url::parse("https://example.org").unwrap(), Some("/r"))
-            .replace(input.to_string());
+        let output = Replacer::new(
+            Url::parse("http://example.com/podcast").unwrap(),
+            Url::parse("https://example.org").unwrap(),
+            Some("/r"),
+        )
+        .replace(input.to_string());
         assert_eq!(output, expected);
     }
 
@@ -305,8 +321,12 @@ mod tests {
     fn test_replace_podcast_link() {
         let input = "<link>https://redcircle.com/shows/open-podcast</link>";
         let expected = "<link>https://example.org/</link>";
-        let output = Replacer::new(Url::parse("https://example.org").unwrap(), None)
-            .replace(input.to_string());
+        let output = Replacer::new(
+            Url::parse("http://example.com/podcast").unwrap(),
+            Url::parse("https://example.org").unwrap(),
+            None,
+        )
+        .replace(input.to_string());
         assert_eq!(output, expected);
     }
 }
