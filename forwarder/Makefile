@@ -33,12 +33,12 @@ lint: ## Lint Rust code
 
 .PHONY: test-rss
 test-rss: ## Test request to worker homepage (retrieve RSS feed)
-	curl -vvv -A "Spotify/1.0" -c - https://forwarder.mre.workers.dev
+	curl -vvv -A "Spotify/1.0" -c - https://redcircle.mre.workers.dev/
 
 .PHONY: test-rss-head
 test-rss-head: ## Test HEAD request to worker (retrieve RSS feed)
-	curl --head -vvv -A "Forwarder Test" -c - https://forwarder.mre.workers.dev
+	curl --head -vvv -A "Forwarder Test" -c - https://redcircle.mre.workers.dev/
 
 .PHONY: test-mp3
 test-mp3: ## Test request to worker mp3 file URL
-	curl -vvv -A "Spotify/1.0" -c - https://forwarder.mre.workers.dev/r/GLT6565139983.mp3?updated=1626919518&ref=https%253A%252F%252Ftraffic.megaphone.fm%252FGLT6565139983.mp3%253Fupdated%253D1626919518
+	curl -L -vvv -A "Spotify/1.0" -c - https://redcircle.mre.workers.dev/r/episodes/3c0f3763-a825-456a-87c3-2e1c5a55cc25/stream.mp3?ref=https%3A%2F%2Fstream.redcircle.com%2Fepisodes%2F3c0f3763-a825-456a-87c3-2e1c5a55cc25%2Fstream.mp3
