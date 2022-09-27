@@ -30,7 +30,7 @@ impl Client {
     }
 
     /// Return whether the client is a bot
-    pub fn is_bot(&self) -> bool {
+    pub const fn is_bot(&self) -> bool {
         self.bot
     }
 }
@@ -278,7 +278,7 @@ static USER_AGENTS: Lazy<HashMap<String, String>> = Lazy::new(|| {
         ("UniversalFeedParser/", "Script [bot]"),
     ]
     .iter()
-    .map(|(k, v)| (k.to_string(), v.to_string()))
+    .map(|(k, v)| ((*k).to_string(), (*v).to_string()))
     .collect()
 });
 

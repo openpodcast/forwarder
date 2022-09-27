@@ -10,6 +10,7 @@
 mod client;
 mod forward;
 mod helpers;
+mod openpodcast;
 mod panic;
 mod posthog;
 mod rss;
@@ -17,6 +18,7 @@ mod rss;
 use crate::{forward::extract_ref, helpers::website, rss::Replacer};
 use client::client;
 use helpers::{log_request, upstream};
+use serde_json::json;
 use url::Url;
 use worker::{
     console_log, event, Env, Fetch, Method, Request, Response, Result, RouteContext, Router,
@@ -147,6 +149,32 @@ pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Respo
                         .send(event)
                         .await?;
                     console_log!("PostHog status: {:#?}", response);
+
+                    // send to openpodcast api
+                    let openpodcast_client = openpodcast::Client::new(
+                        ctx.var("OPENPODCAST_API_ENDPOINT")?.to_string(),
+                        ctx.var("OPENPODCAST_API_KEY")?.to_string(),
+                    );
+
+                    let ip = match request.headers().get("x-real-ip") {
+                        Ok(Some(ip)) => ip,
+                        _ => "unknown".to_string(),
+                    };
+
+                    let user_agent = match request.headers().get("user-agent")? {
+                        Some(ua) => ua,
+                        None => "unknown".to_string(),
+                    };
+
+                    let response = openpodcast_client
+                        .send(json!(
+                            {
+                                "ip": ip,
+                                "user-agent": user_agent,
+                              }
+                        ))
+                        .await?;
+                    console_log!("OpenPodcast API response: {:#?}", response);
 
                     println!("Forwarding to {url}");
                     let response = Response::redirect(url)?;
