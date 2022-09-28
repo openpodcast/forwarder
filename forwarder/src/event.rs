@@ -70,6 +70,7 @@ pub(crate) fn openpodcast<D>(
         "latitude": latitude,
         "longitude": longitude,
         "headers": headers,
+        "user-agent": request.headers().get("user-agent").unwrap_or(None),
         "ip": request.headers().get("x-real-ip").unwrap_or(None),
     });
 
