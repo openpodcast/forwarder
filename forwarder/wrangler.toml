@@ -7,7 +7,7 @@ compatibility_date = "2022-08-18"
 VERSION = "0.1.0"
 UPSTREAM_FEED_URL = "https://feeds.redcircle.com/2c2cd740-1c1f-4928-adac-98a692dbf4c2"
 WEBSITE_URL = "https://openpodcast.dev/podcast"
-OPENPODCAST_API_ENDPOINT = "https://api-6a7hrmyrca-od.a.run.app/events"
+OPENPODCAST_API_ENDPOINT = "https://api.openpodcast.dev/events"
 OPENPODCAST_API_KEY = "cn389ncoiwuencr"
 POSTHOG_API_KEY = "phc_9ED9rP5zeJiXctQIAeern5RKHhFtmoWIIujzg90zisP"
 
