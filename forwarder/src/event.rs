@@ -61,9 +61,9 @@ pub(crate) fn openpodcast<D>(
     let event = json!({
         "kind":request_kind(request.path()),
         "upstream": upstream(ctx)?,
-        "upstream_ref": extract_ref(request).and_then(|s| Ok(s.to_string()))?,
+        "upstream-ref": extract_ref(request).and_then(|s| Ok(s.to_string()))?,
         "client": client(request).name(),
-        "is_bot": client(request).is_bot(),
+        "is-bot": client(request).is_bot(),
         "cloudflare": format!("{:#?}", request.cf()),
         "country": request.cf().country(),
         "path": request.path(),
