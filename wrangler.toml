@@ -1,7 +1,11 @@
 name = "redcircle"
-type = "javascript"
 workers_dev = true
 compatibility_date = "2022-08-18"
+main = "build/worker/shim.mjs"
+
+[dev]
+port = 9000
+local_protocol = "http"
 
 [vars]
 VERSION = "0.1.0"
@@ -14,11 +18,6 @@ POSTHOG_API_KEY = "phc_9ED9rP5zeJiXctQIAeern5RKHhFtmoWIIujzg90zisP"
 [build]
 command = "cargo install -q worker-build && worker-build --release" # required
 
-[build.upload]
-dir = "build/worker"
-format = "modules"
-main = "./shim.mjs"
-
-[[build.upload.rules]]
+[[rules]]
 globs = ["**/*.wasm"]
 type = "CompiledWasm"
