@@ -7,6 +7,14 @@ CONFIG ?= wrangler.toml
 help: ## This help message
 	@echo -e "$$(grep -hE '^\S+:.*##' $(MAKEFILE_LIST) | sed -e 's/:.*##\s*/:/' -e 's/^\(.\+\):\(.*\)/\\x1b[36m\1\\x1b[m:\2/' | column -c2 -t -s :)"
 
+.PHONY: docker-build
+docker-build: ## Build the docker image
+	docker build -t openpodcast/forwarder .
+
+.PHONY: docker-run
+docker-run: ## Run the docker image
+	docker run -it --rm -p 9000:9000 openpodcast/forwarder
+
 .PHONY: build
 build: # Compile project to WebAssembly
 	wrangler build --config $(CONFIG)
