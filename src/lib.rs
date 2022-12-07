@@ -13,7 +13,6 @@ mod forward;
 mod helpers;
 mod openpodcast;
 mod panic;
-mod posthog;
 mod rss;
 
 use crate::{helpers::website, rss::Replacer};
@@ -68,13 +67,6 @@ pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Respo
             let client = client(&request);
             console_log!("Received request from {}", client.name());
 
-            // Comment out the following line to enable RSS feed logging in PostHog
-            // let event = create_cloudflare_event(&request, &ctx)?;
-            // let response = posthog::Client::new(ctx.var("POSTHOG_API_KEY")?.to_string())
-            //     .send(event)
-            //     .await?;
-            // console_log!("PostHog status: {:#?}", response);
-
             // Fetch original RSS feed.
             let mut orig_response = Fetch::Request(Request::new(upstream, Method::Get)?)
                 .send()
@@ -102,13 +94,6 @@ pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Respo
         .get_async("/r/*forward_url", |request, ctx| async move {
             match forward::get(&request, Some("/r")) {
                 Ok(url) => {
-                    let event = event::posthog(&request, &ctx)?;
-                    let response = posthog::Client::new(ctx.var("POSTHOG_API_KEY")?.to_string())
-                        .send(event)
-                        .await?;
-                    console_log!("PostHog status: {:#?}", response);
-
-                    // send to openpodcast api
                     let openpodcast_client = openpodcast::Client::new(
                         ctx.var("OPENPODCAST_API_ENDPOINT")?.to_string(),
                         ctx.var("OPENPODCAST_API_KEY")?.to_string(),

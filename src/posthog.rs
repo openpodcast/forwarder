@@ -6,8 +6,6 @@ use worker::{Fetch, Method, Request, RequestInit, Result};
 
 extern crate serde_json;
 
-const API_ENDPOINT: &str = "https://app.posthog.com/capture/";
-
 pub struct ClientConfig {
     api_endpoint: String,
     api_key: String,

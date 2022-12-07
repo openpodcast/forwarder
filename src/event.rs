@@ -1,6 +1,6 @@
 use crate::client::client;
+use crate::forward::extract_ref;
 use crate::helpers::upstream;
-use crate::{forward::extract_ref, posthog};
 use serde::ser::SerializeMap;
 use serde::{Serialize, Serializer};
 use serde_json::json;
@@ -14,36 +14,6 @@ fn request_kind(path: String) -> String {
     } else {
         path
     }
-}
-
-/// Create `PostHog` event from Cloudflare request
-pub fn posthog<D>(request: &Request, ctx: &RouteContext<D>) -> WorkerResult<posthog::Event> {
-    let kind = request_kind(request.path());
-    let mut event = posthog::Event::new(&kind, &upstream(ctx)?)
-        .property("client", client(request).name())?
-        .property("is_bot", client(request).is_bot())?
-        .property("cloudflare", format!("{:#?}", request.cf()))?
-        .property("country", request.cf().country())?
-        .property("path", request.path())?;
-
-    if let Some((latitude, longitude)) = request.cf().coordinates() {
-        event = event
-            .property("latitude", latitude)?
-            .property("longitude", longitude)?;
-    }
-    for (key, value) in request.headers() {
-        event = event.property(key, value)?;
-    }
-    // Overwrite ip for GeoIP lookup
-    if let Ok(ip) = request.headers().get("x-real-ip") {
-        event = event.property("$ip", ip)?;
-    }
-
-    // Upstream ref is only set for mp3 requests
-    if let Ok(reference) = extract_ref(request) {
-        event = event.property("upstream", reference.as_ref())?;
-    }
-    Ok(event)
 }
 
 struct Cloudflare<'a>(&'a Cf);
