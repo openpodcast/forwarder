@@ -1,27 +1,32 @@
-name: Deploy Rust Cloudflare
+name: Deploy
 
 on:
-  # Currently too slow to be practical
-  # push:
-  #   branches:
-  #     - master
   repository_dispatch:
   workflow_dispatch:
+  push:
+    branches:
+      - master
+  pull_request:
+    types:
+      - opened
+      - synchronize
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     name: Deploy
-    defaults:
-      run:
-        working-directory: forwarder
     steps:
       - uses: actions/checkout@v2
-      # - uses: dtolnay/rust-toolchain@stable
-      # Can't use `cloudflare/wrangler-action`.
-      # See <https://github.com/cloudflare/wrangler-action/pull/61>
-      - name: Publish
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+      - name: Publish (dry run)
+        if: github.ref != 'refs/heads/master'
         env:
-          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
-        working-directory: forwarder
-        run: cargo install wrangler && wrangler publish
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+        run: npm i wrangler && npx wrangler publish --dry-run
+      - name: Publish
+        if: github.ref == 'refs/heads/master'
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+        run: npm i wrangler && npx wrangler publish

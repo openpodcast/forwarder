@@ -1,8 +1,6 @@
 # Needed SHELL since I'm using zsh
 SHELL := /bin/bash
 
-CONFIG ?= wrangler.toml
-
 .PHONY: help
 help: ## This help message
 	@echo -e "$$(grep -hE '^\S+:.*##' $(MAKEFILE_LIST) | sed -e 's/:.*##\s*/:/' -e 's/^\(.\+\):\(.*\)/\\x1b[36m\1\\x1b[m:\2/' | column -c2 -t -s :)"
@@ -15,21 +13,25 @@ docker-build: ## Build the docker image
 docker-run: ## Run the docker image
 	docker run -it --rm -p 9000:9000 openpodcast/forwarder
 
+.PHONY: install
+install: ## Install dependencies
+	npm install
+
 .PHONY: build
 build: # Compile project to WebAssembly
-	wrangler build --config $(CONFIG)
+	wrangler publish --dry-run --outdir=dist
 
 .PHONY: dev 
 dev: ## Run Worker in a development environment
-	wrangler dev --config $(CONFIG)
+	wrangler dev
 
 .PHONY: publish deploy
 publish deploy: ## Deploy worker to Cloudflare
-	@wrangler publish --config $(CONFIG) --verbose || echo "Try wrangler login?"
+	@wrangler publish --verbose || echo "Try wrangler login?"
 
 .PHONY: logs tail
 logs tail: ## Stream worker logs
-	wrangler tail --config $(CONFIG) --verbose --format=pretty
+	wrangler tail --verbose --format=pretty
 
 .PHONY: test
 test: ## Test Rust code

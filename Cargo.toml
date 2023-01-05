@@ -1,6 +1,6 @@
 [package]
 name = "forwarder"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["Matthias <matthias-endler@gmx.net>"]
 edition = "2021"
 description = "Forwarder for MP3 files in podcast feeds"
