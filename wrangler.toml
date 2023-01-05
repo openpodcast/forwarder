@@ -1,22 +1,17 @@
 name = "redcircle"
-workers_dev = true
-compatibility_date = "2022-08-18"
 main = "build/worker/shim.mjs"
+compatibility_date = "2023-01-05"
 
 [dev]
 port = 9000
 local_protocol = "http"
 
 [vars]
-VERSION = "0.1.0"
+VERSION = "0.2.0"
 UPSTREAM_FEED_URL = "https://feeds.redcircle.com/2c2cd740-1c1f-4928-adac-98a692dbf4c2"
 WEBSITE_URL = "https://openpodcast.dev/podcast"
 OPENPODCAST_API_ENDPOINT = "https://api.openpodcast.dev/events"
 OPENPODCAST_API_KEY = "cn389ncoiwuencr"
 
 [build]
-command = "cargo install -q worker-build && worker-build --release" # required
-
-[[rules]]
-globs = ["**/*.wasm"]
-type = "CompiledWasm"
+command = "cargo install -q worker-build --version 0.0.7 && worker-build --release"
