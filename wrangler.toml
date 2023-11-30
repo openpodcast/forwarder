@@ -11,7 +11,7 @@ VERSION = "0.2.0"
 UPSTREAM_FEED_URL = "https://feeds.redcircle.com/2c2cd740-1c1f-4928-adac-98a692dbf4c2"
 WEBSITE_URL = "https://openpodcast.dev/podcast"
 OPENPODCAST_API_ENDPOINT = "https://api.openpodcast.dev/events"
-OPENPODCAST_API_KEY = "cn389ncoiwuencr"
+OPENPODCAST_API_KEY = "$(OPENPODCAST_API_KEY)"
 
 [build]
 command = "cargo install -q worker-build --version 0.0.7 && worker-build --release"
